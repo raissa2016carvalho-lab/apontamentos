@@ -126,6 +126,31 @@
   .pir-row .pv.sem{background:rgba(255,255,255,.16)}
   .pir-row .pn{flex:1;display:flex;align-items:center;padding:0 12px;font-size:12px;font-weight:700;line-height:1.2}
 
+  /* placar dias sem acidentes */
+  .placar{background:linear-gradient(135deg,#0e2a1a,#123d24);border:1px solid #1e5b38;
+    border-left:6px solid var(--ok);border-radius:14px;padding:20px 22px;margin-bottom:18px;
+    display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .placar .big{font-size:54px;font-weight:900;line-height:.9;color:#5cf0a0;
+    text-shadow:0 0 18px rgba(52,209,127,.35);font-variant-numeric:tabular-nums}
+  .placar .info{flex:1;min-width:160px}
+  .placar .info .t{font-size:13px;text-transform:uppercase;letter-spacing:1px;font-weight:800;color:#9ff0c4}
+  .placar .info .s{font-size:12px;color:var(--ink-dim);margin-top:4px}
+  .placar.zerado{background:linear-gradient(135deg,#3a1010,#4d1414);border-color:#7a2a2a;border-left-color:var(--danger)}
+  .placar.zerado .big{color:#ff8a8a;text-shadow:0 0 18px rgba(255,77,77,.35)}
+  .placar.zerado .info .t{color:#ffb3b3}
+
+  /* donut */
+  .donut-wrap{display:flex;gap:24px;align-items:center;flex-wrap:wrap;justify-content:center}
+  #donutSvg{flex:none}
+  .donut-legend{flex:1;min-width:200px;display:flex;flex-direction:column;gap:7px}
+  .donut-legend .lg{display:flex;align-items:center;gap:9px;font-size:12px}
+  .donut-legend .lg .dot{width:13px;height:13px;border-radius:3px;flex:none}
+  .donut-legend .lg .nm{flex:1;color:var(--ink-dim)}
+  .donut-legend .lg .vl{font-weight:800}
+  .donut-legend .lg.zero{opacity:.4}
+  .donut-center{font-size:13px;fill:var(--ink-dim);font-weight:600}
+  .donut-total{font-size:30px;fill:var(--ink);font-weight:900}
+
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(140%);
     background:var(--ok);color:#06281a;padding:14px 22px;border-radius:30px;font-weight:700;
     font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:200;transition:transform .35s;max-width:90%}
@@ -174,6 +199,7 @@
 
   <!-- PAINEL -->
   <section id="view-dash" class="hidden">
+    <div id="placarHost"></div>
     <div class="stat-grid" id="statGrid"></div>
     <div class="bars"><h4>Apontamentos por tipo</h4><div id="barsHost"></div></div>
 
@@ -189,6 +215,14 @@
       <h4>Pirâmide de Segurança</h4>
       <div class="pir-head"><span style="color:#2e7d32">Acumulado</span><span style="color:#e0a800">Semanal</span></div>
       <div id="pirHost"></div>
+    </div>
+
+    <div class="bars" style="margin-top:16px">
+      <h4>Principais Desvios</h4>
+      <div class="donut-wrap">
+        <svg id="donutSvg" viewBox="0 0 200 200" width="200" height="200"></svg>
+        <div class="donut-legend" id="donutLegend"></div>
+      </div>
     </div>
   </section>
 </main>
@@ -242,6 +276,7 @@ const CAMPOS = {
     {k:"pendencias",l:"Pendências / observações",t:"textarea",ph:"O que precisa corrigir"},
   ],
   DESVIO_COMP:[
+    {k:"categoria",l:"Categoria do desvio",t:"select",opt:["Documentação","EPI","Isolamento/Sinalização","Máquinas, Equip. e Ferramentas","5S-Organização","Meio Ambiente","Ergonomia Deficiente","Comportamento Inseguro","Condição Insegura"]},
     {k:"descricao",l:"Descrição do desvio",t:"textarea",ph:"O que foi observado"},
     {k:"risco",l:"Nível de risco",t:"select",opt:["Baixo","Médio","Alto","Crítico"]},
     {k:"correcao",l:"Ação corretiva",t:"textarea",ph:"Medida adotada / recomendada"},
@@ -266,6 +301,22 @@ const PIRAMIDE = [
   {k:"QA",   nome:"QA - Quase Acidente",             cor:"#7d3c98", match:["QA - Quase Acidente"]},
   {k:"AISI", nome:"AI + SI - Ato/Situação Insegura", cor:"#1f3a93", match:["AI - Ato Inseguro","SI - Situação Insegura"]},
 ];
+
+/* ---- categorias de desvio (donut) + cores da referência ---- */
+const CATEGORIAS = [
+  {nome:"Documentação",                  cor:"#c0392b"},
+  {nome:"EPI",                           cor:"#8e44ad"},
+  {nome:"Isolamento/Sinalização",        cor:"#0b2c66"},
+  {nome:"Máquinas, Equip. e Ferramentas",cor:"#2e86de"},
+  {nome:"5S-Organização",                cor:"#3aa0e8"},
+  {nome:"Meio Ambiente",                 cor:"#16a085"},
+  {nome:"Ergonomia Deficiente",          cor:"#a3cb38"},
+  {nome:"Comportamento Inseguro",        cor:"#f1c40f"},
+  {nome:"Condição Insegura",             cor:"#e74c3c"},
+];
+
+/* ---- placar de dias sem acidentes ---- */
+const DATA_BASE_ACIDENTE = "2025-10-01"; // 01/10/2025
 
 let app, db, registros=[], tipoSel="ROTA_IPS", funcs=[];
 const $=id=>document.getElementById(id);
@@ -439,6 +490,8 @@ function renderDash(){
 
   renderMensal();
   renderPiramide();
+  renderPlacar();
+  renderDonut();
 }
 
 /* ---- gráfico de quantidade por mês ---- */
@@ -503,8 +556,61 @@ function renderPiramide(){
   }).join("");
 }
 
-/* ---------- UTIL ---------- */
-function fmtData(d){ if(!d)return""; const[a,m,dia]=d.split("-"); return `${dia}/${m}/${a}`; }
+/* ---- placar de dias sem acidentes ---- */
+function renderPlacar(){
+  // acha o acidente mais recente registrado
+  let ultimo=DATA_BASE_ACIDENTE;
+  registros.forEach(r=>{ if(r.tipo==="ACIDENTE" && r.data && r.data>ultimo) ultimo=r.data; });
+  const base=new Date(ultimo+"T00:00:00");
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const dias=Math.max(0,Math.floor((hoje-base)/86400000));
+  const zerouHoje = ultimo!==DATA_BASE_ACIDENTE && dias===0;
+  $("placarHost").innerHTML=`
+    <div class="placar ${zerouHoje?'zerado':''}">
+      <div class="big">${dias}</div>
+      <div class="info">
+        <div class="t">${dias===1?'Dia sem acidentes':'Dias sem acidentes'}</div>
+        <div class="s">Contando desde ${fmtData(ultimo)}${ultimo!==DATA_BASE_ACIDENTE?' (último acidente)':''}</div>
+      </div>
+    </div>`;
+}
+
+/* ---- donut: principais desvios ---- */
+function renderDonut(){
+  const dados=CATEGORIAS.map(c=>({
+    ...c,
+    n:registros.filter(r=>r.tipo==="DESVIO_COMP" && r.dados && r.dados.categoria===c.nome).length
+  }));
+  const total=dados.reduce((s,d)=>s+d.n,0);
+  const svg=$("donutSvg");
+  const cx=100,cy=100,r=70,sw=34; // raio e espessura
+  if(total===0){
+    svg.innerHTML=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#2a3540" stroke-width="${sw}"/>
+      <text x="${cx}" y="${cy+5}" text-anchor="middle" class="donut-center">Sem desvios</text>`;
+  } else {
+    let ang=-90; // começa no topo
+    const arcs=dados.filter(d=>d.n>0).map(d=>{
+      const frac=d.n/total, a0=ang, a1=ang+frac*360; ang=a1;
+      const big=frac>0.5?1:0;
+      const p=(deg)=>[cx+r*Math.cos(deg*Math.PI/180), cy+r*Math.sin(deg*Math.PI/180)];
+      const [x0,y0]=p(a0),[x1,y1]=p(a1);
+      // posição do número no meio do arco
+      const mid=(a0+a1)/2, [lx,ly]=p(mid);
+      return `<path d="M ${x0} ${y0} A ${r} ${r} 0 ${big} 1 ${x1} ${y1}"
+        fill="none" stroke="${d.cor}" stroke-width="${sw}"/>
+        <text x="${lx}" y="${ly+4}" text-anchor="middle" fill="#fff" font-weight="800" font-size="13">${d.n}</text>`;
+    }).join("");
+    svg.innerHTML=arcs+
+      `<text x="${cx}" y="${cy-4}" text-anchor="middle" class="donut-total">${total}</text>
+       <text x="${cx}" y="${cy+15}" text-anchor="middle" class="donut-center">desvios</text>`;
+  }
+  $("donutLegend").innerHTML=dados.map(d=>`
+    <div class="lg ${d.n===0?'zero':''}">
+      <span class="dot" style="background:${d.cor}"></span>
+      <span class="nm">${d.nome}</span>
+      <span class="vl">${d.n}</span>
+    </div>`).join("");
+}
 function toast(msg,cls){
   const t=$("toast"); t.textContent=msg; t.className="toast show"+(cls?" "+cls:"");
   setTimeout(()=>t.className="toast"+(cls?" "+cls:""),2600);
