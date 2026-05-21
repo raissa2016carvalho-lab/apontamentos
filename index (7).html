@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#0c1116" />
+<title>Apontamento de Segurança em Campo</title>
+<style>
+  :root{
+    --bg:#0c1116; --panel:#141b22; --panel-2:#1b242d; --line:#2a3540;
+    --ink:#eef3f7; --ink-dim:#9fb0bd;
+    --hi:#ffcf33; --hi-ink:#1a1300;
+    --ok:#34d17f; --warn:#ff8a3d; --danger:#ff4d4d; --blue:#4aa8ff;
+    --radius:14px; --font:'Segoe UI',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:repeating-linear-gradient(45deg,#0c1116 0 22px,#0d131a 22px 44px);
+    color:var(--ink);font-family:var(--font);min-height:100vh;font-size:16px;
+    -webkit-text-size-adjust:100%;
+  }
+  header{
+    position:sticky;top:0;z-index:50;
+    background:linear-gradient(180deg,#101820,#0c1116);
+    border-bottom:3px solid var(--hi);padding:14px 16px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .logo{
+    width:42px;height:42px;flex:none;border-radius:9px;
+    background:repeating-linear-gradient(45deg,#1a1300 0 7px,#ffcf33 7px 14px);
+    border:2px solid var(--hi);display:grid;place-items:center;font-size:22px;
+  }
+  header h1{font-size:16px;margin:0;line-height:1.15;letter-spacing:.3px}
+  header h1 small{display:block;color:var(--ink-dim);font-weight:400;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+  main{max-width:760px;margin:0 auto;padding:16px 14px 120px}
+  .hidden{display:none !important}
+
+  label{display:block;font-size:12px;font-weight:700;letter-spacing:.4px;
+    text-transform:uppercase;color:var(--ink-dim);margin:0 0 6px}
+  input,select,textarea{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);
+    color:var(--ink);border-radius:11px;padding:13px;font-size:16px;
+    font-family:inherit;outline:none;margin-bottom:15px;
+  }
+  textarea{resize:vertical;min-height:84px}
+  input:focus,select:focus,textarea:focus{border-color:var(--hi)}
+  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%239fb0bd' viewBox='0 0 16 16'%3E%3Cpath d='M3 5l5 6 5-6z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+  .btn{width:100%;background:var(--hi);color:var(--hi-ink);border:none;padding:15px;
+    border-radius:11px;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:.3px;text-transform:uppercase}
+  .btn:active{transform:translateY(1px)}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px}
+  .tab{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--ink-dim);
+    padding:12px 8px;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;text-align:center}
+  .tab.active{background:var(--hi);color:var(--hi-ink);border-color:var(--hi)}
+
+  .type-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .type-card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--c);
+    border-radius:12px;padding:16px 14px;cursor:pointer;text-align:left;color:var(--ink);transition:transform .08s}
+  .type-card:active{transform:scale(.97)}
+  .type-card.active{border-color:var(--c);box-shadow:0 0 0 2px var(--c) inset}
+  .type-card .ico{font-size:24px}
+  .type-card .nm{font-weight:800;font-size:14px;margin-top:7px;line-height:1.2}
+  .type-card .ds{font-size:11px;color:var(--ink-dim);margin-top:3px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px 18px;margin-top:16px}
+  .card h3{margin:0 0 4px;font-size:17px;display:flex;align-items:center;gap:9px}
+  .card .badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;background:var(--c);color:#0c1116}
+  .card .sub{color:var(--ink-dim);font-size:12px;margin:0 0 18px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  @media(max-width:480px){.row{grid-template-columns:1fr}}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin:-6px 0 15px}
+  .chip{background:var(--panel-2);border:1px solid var(--line);border-radius:20px;
+    padding:6px 12px;font-size:13px;display:flex;align-items:center;gap:7px}
+  .chip span{cursor:pointer;color:var(--danger);font-weight:800}
+  .add-row{display:flex;gap:9px;margin-bottom:15px}
+  .add-row input{margin-bottom:0}
+  .add-row button{flex:none;width:52px;background:var(--panel-2);border:1px solid var(--line);
+    color:var(--hi);border-radius:11px;font-size:24px;cursor:pointer;font-weight:700}
+
+  .filters{display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap}
+  .filters select,.filters input{margin-bottom:0;flex:1;min-width:130px}
+  .rec{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--c);
+    border-radius:12px;padding:14px 15px;margin-bottom:11px}
+  .rec .top{display:flex;align-items:center;gap:9px;margin-bottom:8px;flex-wrap:wrap}
+  .rec .tg{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;background:var(--c);color:#0c1116;text-transform:uppercase}
+  .rec .dt{font-size:12px;color:var(--ink-dim);margin-left:auto}
+  .rec .ar{font-weight:700;font-size:15px}
+  .rec .det{font-size:13px;color:var(--ink-dim);margin-top:6px;line-height:1.5}
+  .rec .det b{color:var(--ink);font-weight:600}
+  .rec .ppl{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+  .rec .ppl span{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:3px 9px;font-size:11px}
+  .del{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:12px;margin-top:8px}
+  .empty{text-align:center;color:var(--ink-dim);padding:50px 20px;font-size:14px}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:11px;margin-bottom:18px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:12px;padding:16px 14px}
+  .stat .n{font-size:30px;font-weight:800;line-height:1}
+  .stat .l{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.5px;margin-top:6px}
+  .bars{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .bars h4{margin:0 0 16px;font-size:14px}
+  .bar-row{display:flex;align-items:center;gap:11px;margin-bottom:13px;font-size:13px}
+  .bar-row .nm{width:120px;flex:none;color:var(--ink-dim)}
+  .bar-track{flex:1;background:var(--panel-2);border-radius:8px;height:22px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:8px;background:var(--c);min-width:3px;transition:width .5s}
+  .bar-row .vl{width:34px;text-align:right;font-weight:700}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(140%);
+    background:var(--ok);color:#06281a;padding:14px 22px;border-radius:30px;font-weight:700;
+    font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:200;transition:transform .35s;max-width:90%}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  .toast.err{background:var(--danger);color:#fff}
+  .loading{text-align:center;padding:60px;color:var(--ink-dim)}
+  .spin{display:inline-block;width:34px;height:34px;border:4px solid var(--line);
+    border-top-color:var(--hi);border-radius:50%;animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .setup{background:rgba(255,138,61,.1);border:1px solid rgba(255,138,61,.4);
+    border-radius:12px;padding:16px;font-size:13px;color:#ffd2ad;line-height:1.6;margin:0 0 16px}
+  .setup code{background:#000;padding:2px 6px;border-radius:5px;color:var(--hi);font-size:12px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⚠️</div>
+  <h1>Segurança em Campo<small>Apontamentos</small></h1>
+</header>
+
+<main>
+  <div id="setupHost"></div>
+
+  <div class="tabs">
+    <div class="tab active" data-view="novo">＋ Novo</div>
+    <div class="tab" data-view="hist">📋 Histórico</div>
+    <div class="tab" data-view="dash">📊 Painel</div>
+  </div>
+
+  <!-- NOVO -->
+  <section id="view-novo">
+    <label style="margin-bottom:10px">Tipo de apontamento</label>
+    <div class="type-grid" id="typeGrid"></div>
+    <div id="formHost"></div>
+  </section>
+
+  <!-- HISTÓRICO -->
+  <section id="view-hist" class="hidden">
+    <div class="filters">
+      <select id="fType"><option value="">Todos os tipos</option></select>
+      <input id="fSearch" placeholder="🔍 Buscar área ou funcionário" />
+    </div>
+    <div id="histList"><div class="loading"><div class="spin"></div></div></div>
+  </section>
+
+  <!-- PAINEL -->
+  <section id="view-dash" class="hidden">
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="bars"><h4>Apontamentos por tipo</h4><div id="barsHost"></div></div>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, deleteDoc, doc,
+  query, orderBy, onSnapshot, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ============================================================
+   👉 COLE AQUI A CONFIG DO SEU FIREBASE
+   Console Firebase → Configurações do projeto → Seus apps → Web
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAx7nzwRcUbt5OgjQfvPlg9I9FQqJC7D18",
+  authDomain: "seguranca-53af8.firebaseapp.com",
+  projectId: "seguranca-53af8",
+  storageBucket: "seguranca-53af8.firebasestorage.app",
+  messagingSenderId: "513958387414",
+  appId: "1:513958387414:web:74c31973e38fbe3373b377",
+  measurementId: "G-VKEXKBH2WJ"
+};
+const CONFIGURADO = !firebaseConfig.apiKey.includes("COLE_AQUI");
+
+/* ---------- OS 5 TIPOS ---------- */
+const TIPOS = {
+  ROTA_IPS:      { nome:"Rotas de IPS",          ico:"🚶", cor:"#4aa8ff", desc:"Inspeção planejada" },
+  INTERACAO_SEG: { nome:"Interação Seg./Ações",  ico:"🤝", cor:"#34d17f", desc:"Diálogo e ações" },
+  ANALISE_DOC:   { nome:"Análise Documentos",    ico:"📑", cor:"#b78bff", desc:"Conferência de docs" },
+  DESVIO_COMP:   { nome:"Desvio/Comportamental", ico:"⚠️", cor:"#ff8a3d", desc:"Desvio observado" },
+  ACIDENTE:      { nome:"Acidente",              ico:"🚨", cor:"#ff4d4d", desc:"Registro de evento" },
+};
+const CAMPOS = {
+  ROTA_IPS:[
+    {k:"rota",l:"Rota / Trajeto",t:"text",ph:"Ex: Pátio → Galpão B"},
+    {k:"itens",l:"Itens verificados",t:"textarea",ph:"O que foi inspecionado"},
+    {k:"status",l:"Resultado",t:"select",opt:["Conforme","Conforme com ressalva","Não conforme"]},
+  ],
+  INTERACAO_SEG:[
+    {k:"tema",l:"Tema abordado",t:"text",ph:"Ex: Uso de EPI"},
+    {k:"acao",l:"Ação / orientação",t:"textarea",ph:"Descreva a interação"},
+    {k:"reincidencia",l:"Reincidência?",t:"select",opt:["Não","Sim"]},
+  ],
+  ANALISE_DOC:[
+    {k:"documento",l:"Documento analisado",t:"text",ph:"Ex: PT, APR, Checklist"},
+    {k:"status",l:"Situação",t:"select",opt:["Aprovado","Pendente","Reprovado"]},
+    {k:"pendencias",l:"Pendências / observações",t:"textarea",ph:"O que precisa corrigir"},
+  ],
+  DESVIO_COMP:[
+    {k:"descricao",l:"Descrição do desvio",t:"textarea",ph:"O que foi observado"},
+    {k:"risco",l:"Nível de risco",t:"select",opt:["Baixo","Médio","Alto","Crítico"]},
+    {k:"correcao",l:"Ação corretiva",t:"textarea",ph:"Medida adotada / recomendada"},
+  ],
+  ACIDENTE:[
+    {k:"classificacao",l:"Classificação",t:"select",opt:["Quase acidente","Sem afastamento","Com afastamento","Grave"]},
+    {k:"descricao",l:"Descrição do ocorrido",t:"textarea",ph:"Como aconteceu"},
+    {k:"lesao",l:"Houve lesão?",t:"text",ph:"Descreva ou 'Não'"},
+    {k:"medidas",l:"Medidas tomadas",t:"textarea",ph:"Providências imediatas"},
+  ],
+};
+
+let app, db, registros=[], tipoSel="ROTA_IPS", funcs=[];
+const $=id=>document.getElementById(id);
+
+if(CONFIGURADO){
+  app=initializeApp(firebaseConfig);
+  db=getFirestore(app);
+  ouvirRegistros();
+}else{
+  $("setupHost").innerHTML='<div class="setup">⚙️ <b>Falta configurar o Firebase.</b> Abra este arquivo e cole sua config no lugar de <code>COLE_AQUI</code>. Enquanto isso, os registros ficam só na tela (não salvam).</div>';
+}
+
+montarTipos(); montarForm(); popularFiltro(); renderHist();
+
+/* abas */
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  ["novo","hist","dash"].forEach(v=>$("view-"+v).classList.add("hidden"));
+  $("view-"+t.dataset.view).classList.remove("hidden");
+  if(t.dataset.view==="dash") renderDash();
+});
+
+function montarTipos(){
+  $("typeGrid").innerHTML=Object.entries(TIPOS).map(([k,v])=>`
+    <button class="type-card ${k===tipoSel?'active':''}" data-t="${k}" style="--c:${v.cor}">
+      <div class="ico">${v.ico}</div><div class="nm">${v.nome}</div><div class="ds">${v.desc}</div>
+    </button>`).join("");
+  document.querySelectorAll(".type-card").forEach(c=>c.onclick=()=>{
+    tipoSel=c.dataset.t;
+    document.querySelectorAll(".type-card").forEach(x=>x.classList.remove("active"));
+    c.classList.add("active"); montarForm();
+  });
+}
+
+function montarForm(){
+  funcs=[];
+  const t=TIPOS[tipoSel], now=new Date();
+  const data=now.toISOString().slice(0,10);
+  const hora=now.toTimeString().slice(0,5);
+  const esp=CAMPOS[tipoSel].map(c=>{
+    if(c.t==="textarea") return `<label>${c.l}</label><textarea data-k="${c.k}" placeholder="${c.ph||''}"></textarea>`;
+    if(c.t==="select")   return `<label>${c.l}</label><select data-k="${c.k}">${c.opt.map(o=>`<option>${o}</option>`).join("")}</select>`;
+    return `<label>${c.l}</label><input data-k="${c.k}" placeholder="${c.ph||''}" />`;
+  }).join("");
+  $("formHost").innerHTML=`
+    <div class="card" style="--c:${t.cor}">
+      <h3>${t.ico} ${t.nome} <span class="badge">${t.desc}</span></h3>
+      <p class="sub">Preencha os dados da inspeção/observação</p>
+      <div class="row">
+        <div><label>Data</label><input type="date" id="f_data" value="${data}"></div>
+        <div><label>Hora</label><input type="time" id="f_hora" value="${hora}"></div>
+      </div>
+      <label>Área inspecionada</label>
+      <input id="f_area" placeholder="Ex: Almoxarifado, Linha 3, Pátio">
+      <label>Funcionário(s) inspecionado(s)</label>
+      <div class="add-row">
+        <input id="f_func" placeholder="Nome do funcionário" />
+        <button id="f_addFunc">＋</button>
+      </div>
+      <div class="chips" id="f_chips"></div>
+      ${esp}
+      <label>Observações gerais</label>
+      <textarea id="f_obs" placeholder="Informações adicionais (opcional)"></textarea>
+      <button class="btn" id="f_salvar">✓ Registrar apontamento</button>
+    </div>`;
+  $("f_addFunc").onclick=addFunc;
+  $("f_func").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addFunc();}});
+  $("f_salvar").onclick=salvar;
+}
+function addFunc(){
+  const v=$("f_func").value.trim(); if(!v)return;
+  funcs.push(v); $("f_func").value=""; renderChips();
+}
+function renderChips(){
+  $("f_chips").innerHTML=funcs.map((f,i)=>`<div class="chip">${f}<span data-i="${i}">✕</span></div>`).join("");
+  $("f_chips").querySelectorAll("span").forEach(s=>s.onclick=()=>{funcs.splice(+s.dataset.i,1);renderChips();});
+}
+
+async function salvar(){
+  const area=$("f_area").value.trim();
+  if(!area){toast("Informe a área inspecionada","err");return;}
+  if(funcs.length===0){toast("Adicione ao menos um funcionário","err");return;}
+  const dados={};
+  $("formHost").querySelectorAll("[data-k]").forEach(el=>dados[el.dataset.k]=el.value.trim());
+  const reg={
+    tipo:tipoSel, tipoNome:TIPOS[tipoSel].nome,
+    data:$("f_data").value, hora:$("f_hora").value,
+    dataHora:`${$("f_data").value}T${$("f_hora").value}`,
+    area, funcionarios:[...funcs], dados,
+    obs:$("f_obs").value.trim(),
+    criadoEm:CONFIGURADO?serverTimestamp():Date.now()
+  };
+  const btn=$("f_salvar"); btn.disabled=true; btn.textContent="Salvando...";
+  try{
+    if(CONFIGURADO){ await addDoc(collection(db,"apontamentos"),reg); }
+    else { registros.unshift({id:"local"+Date.now(),...reg,criadoEm:Date.now()}); renderHist(); }
+    toast("Apontamento registrado ✓");
+    montarForm();
+  }catch(e){ toast("Erro ao salvar: "+e.message,"err"); }
+  btn.disabled=false; btn.textContent="✓ Registrar apontamento";
+}
+
+/* ---------- FIRESTORE LIVE ---------- */
+function ouvirRegistros(){
+  const q=query(collection(db,"apontamentos"),orderBy("dataHora","desc"));
+  onSnapshot(q,snap=>{
+    registros=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderHist(); 
+    if(!$("view-dash").classList.contains("hidden")) renderDash();
+  },err=>{ toast("Erro de leitura: "+err.message,"err"); });
+}
+
+/* ---------- HISTÓRICO ---------- */
+function popularFiltro(){
+  $("fType").innerHTML='<option value="">Todos os tipos</option>'+
+    Object.entries(TIPOS).map(([k,v])=>`<option value="${k}">${v.nome}</option>`).join("");
+  $("fType").onchange=renderHist;
+  $("fSearch").oninput=renderHist;
+}
+function renderHist(){
+  const ft=$("fType").value, fs=($("fSearch").value||"").toLowerCase();
+  let list=registros.filter(r=>(!ft||r.tipo===ft));
+  if(fs) list=list.filter(r=>(r.area||"").toLowerCase().includes(fs)||
+    (r.funcionarios||[]).join(" ").toLowerCase().includes(fs));
+  const host=$("histList");
+  if(list.length===0){host.innerHTML='<div class="empty">Nenhum apontamento ainda.<br>Vá em <b>＋ Novo</b> para registrar.</div>';return;}
+  host.innerHTML=list.map(r=>{
+    const t=TIPOS[r.tipo]||{cor:"#888",ico:"•",nome:r.tipo};
+    const det=Object.entries(r.dados||{}).filter(([,v])=>v).map(([k,v])=>{
+      const def=(CAMPOS[r.tipo]||[]).find(c=>c.k===k);
+      return `<b>${def?def.l:k}:</b> ${v}`;
+    }).join(" &nbsp;·&nbsp; ");
+    return `<div class="rec" style="--c:${t.cor}">
+      <div class="top"><span class="tg">${t.ico} ${t.nome}</span>
+        <span class="dt">${fmtData(r.data)} • ${r.hora||""}</span></div>
+      <div class="ar">📍 ${r.area||"—"}</div>
+      ${det?`<div class="det">${det}</div>`:""}
+      ${r.obs?`<div class="det"><b>Obs:</b> ${r.obs}</div>`:""}
+      <div class="ppl">${(r.funcionarios||[]).map(f=>`<span>👤 ${f}</span>`).join("")}</div>
+      <button class="del" data-id="${r.id}">🗑 Excluir</button>
+    </div>`;
+  }).join("");
+  host.querySelectorAll(".del").forEach(b=>b.onclick=()=>excluir(b.dataset.id));
+}
+async function excluir(id){
+  if(!confirm("Excluir este apontamento?"))return;
+  if(CONFIGURADO){ try{await deleteDoc(doc(db,"apontamentos",id));toast("Excluído");}catch(e){toast("Erro: "+e.message,"err");} }
+  else { registros=registros.filter(r=>r.id!==id); renderHist(); toast("Excluído"); }
+}
+
+/* ---------- PAINEL ---------- */
+function renderDash(){
+  const total=registros.length;
+  const hoje=new Date().toISOString().slice(0,10);
+  const hojeN=registros.filter(r=>r.data===hoje).length;
+  const funcsUnic=new Set(); registros.forEach(r=>(r.funcionarios||[]).forEach(f=>funcsUnic.add(f)));
+  const areas=new Set(registros.map(r=>r.area).filter(Boolean));
+  $("statGrid").innerHTML=`
+    <div class="stat" style="--c:var(--hi)"><div class="n">${total}</div><div class="l">Total de apontamentos</div></div>
+    <div class="stat" style="--c:var(--ok)"><div class="n">${hojeN}</div><div class="l">Registrados hoje</div></div>
+    <div class="stat" style="--c:var(--blue)"><div class="n">${funcsUnic.size}</div><div class="l">Funcionários</div></div>
+    <div class="stat" style="--c:var(--warn)"><div class="n">${areas.size}</div><div class="l">Áreas</div></div>`;
+  const max=Math.max(1,...Object.keys(TIPOS).map(k=>registros.filter(r=>r.tipo===k).length));
+  $("barsHost").innerHTML=Object.entries(TIPOS).map(([k,v])=>{
+    const n=registros.filter(r=>r.tipo===k).length;
+    return `<div class="bar-row"><span class="nm">${v.ico} ${v.nome}</span>
+      <span class="bar-track"><span class="bar-fill" style="--c:${v.cor};width:${n/max*100}%"></span></span>
+      <span class="vl">${n}</span></div>`;
+  }).join("");
+}
+
+/* ---------- UTIL ---------- */
+function fmtData(d){ if(!d)return""; const[a,m,dia]=d.split("-"); return `${dia}/${m}/${a}`; }
+function toast(msg,cls){
+  const t=$("toast"); t.textContent=msg; t.className="toast show"+(cls?" "+cls:"");
+  setTimeout(()=>t.className="toast"+(cls?" "+cls:""),2600);
+}
+</script>
+</body>
+</html>
