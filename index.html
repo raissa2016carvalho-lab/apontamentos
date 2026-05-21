@@ -107,6 +107,25 @@
   .bar-fill{height:100%;border-radius:8px;background:var(--c);min-width:3px;transition:width .5s}
   .bar-row .vl{width:34px;text-align:right;font-weight:700}
 
+  /* gráfico mensal */
+  .month-chart{display:flex;align-items:flex-end;gap:5px;height:200px;padding:24px 0 0;overflow-x:auto}
+  .mcol{flex:1;min-width:38px;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
+  .mcol .mbar{width:60%;max-width:34px;background:linear-gradient(180deg,#4a5b73,#2c3a4f);
+    border-radius:4px 4px 0 0;position:relative;min-height:2px;transition:height .5s}
+  .mcol .mbar .mval{position:absolute;top:-22px;left:50%;transform:translateX(-50%);
+    font-size:12px;font-weight:800;border:1px solid var(--line);border-radius:4px;padding:1px 6px;background:var(--panel-2)}
+  .mcol .mlab{font-size:9px;color:var(--ink-dim);margin-top:7px;text-transform:uppercase;letter-spacing:.3px;text-align:center;white-space:nowrap}
+
+  /* pirâmide */
+  .pir-head{display:flex;justify-content:space-between;font-size:12px;font-weight:800;
+    text-transform:uppercase;letter-spacing:.5px;margin:4px 0 12px;padding:0 4px}
+  .pir-row{display:flex;align-items:stretch;margin:0 auto 3px;color:#fff;border-radius:3px;overflow:hidden;
+    box-shadow:0 1px 4px rgba(0,0,0,.3)}
+  .pir-row .pv{width:46px;flex:none;display:grid;place-items:center;font-weight:800;font-size:14px;
+    background:rgba(0,0,0,.18)}
+  .pir-row .pv.sem{background:rgba(255,255,255,.16)}
+  .pir-row .pn{flex:1;display:flex;align-items:center;padding:0 12px;font-size:12px;font-weight:700;line-height:1.2}
+
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(140%);
     background:var(--ok);color:#06281a;padding:14px 22px;border-radius:30px;font-weight:700;
     font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:200;transition:transform .35s;max-width:90%}
@@ -157,6 +176,20 @@
   <section id="view-dash" class="hidden">
     <div class="stat-grid" id="statGrid"></div>
     <div class="bars"><h4>Apontamentos por tipo</h4><div id="barsHost"></div></div>
+
+    <div class="bars" style="margin-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px">
+        <h4 style="margin:0">Quantidade por mês</h4>
+        <select id="anoSel" style="width:auto;margin:0;padding:9px 34px 9px 12px;font-size:14px"></select>
+      </div>
+      <div id="mesHost" class="month-chart"></div>
+    </div>
+
+    <div class="bars" style="margin-top:16px">
+      <h4>Pirâmide de Segurança</h4>
+      <div class="pir-head"><span style="color:#2e7d32">Acumulado</span><span style="color:#e0a800">Semanal</span></div>
+      <div id="pirHost"></div>
+    </div>
   </section>
 </main>
 
@@ -212,14 +245,27 @@ const CAMPOS = {
     {k:"descricao",l:"Descrição do desvio",t:"textarea",ph:"O que foi observado"},
     {k:"risco",l:"Nível de risco",t:"select",opt:["Baixo","Médio","Alto","Crítico"]},
     {k:"correcao",l:"Ação corretiva",t:"textarea",ph:"Medida adotada / recomendada"},
+    {k:"piramide",l:"Classificação (pirâmide)",t:"select",opt:["AI - Ato Inseguro","SI - Situação Insegura"]},
   ],
   ACIDENTE:[
     {k:"classificacao",l:"Classificação",t:"select",opt:["Quase acidente","Sem afastamento","Com afastamento","Grave"]},
     {k:"descricao",l:"Descrição do ocorrido",t:"textarea",ph:"Como aconteceu"},
     {k:"lesao",l:"Houve lesão?",t:"text",ph:"Descreva ou 'Não'"},
     {k:"medidas",l:"Medidas tomadas",t:"textarea",ph:"Providências imediatas"},
+    {k:"piramide",l:"Classificação (pirâmide)",t:"select",opt:["QA - Quase Acidente","PS - Primeiros Socorros","SPT - Com Tratamento Médico","SPTR - Com Restrição","CPT - Com Perda de Tempo","Fatalidade"]},
   ],
 };
+
+/* ---- níveis da pirâmide (de cima p/ baixo) + cores ---- */
+const PIRAMIDE = [
+  {k:"FAT",  nome:"Fatalidade",                      cor:"#7a1f1f", match:["Fatalidade"]},
+  {k:"CPT",  nome:"CPT - Com Perda de Tempo",        cor:"#a3242b", match:["CPT - Com Perda de Tempo"]},
+  {k:"SPTR", nome:"SPTR - Com Restrição",            cor:"#c0392b", match:["SPTR - Com Restrição"]},
+  {k:"SPT",  nome:"SPT - Com Tratamento Médico",     cor:"#cf5b8b", match:["SPT - Com Tratamento Médico"]},
+  {k:"PS",   nome:"PS - Primeiros Socorros",         cor:"#a64ca6", match:["PS - Primeiros Socorros"]},
+  {k:"QA",   nome:"QA - Quase Acidente",             cor:"#7d3c98", match:["QA - Quase Acidente"]},
+  {k:"AISI", nome:"AI + SI - Ato/Situação Insegura", cor:"#1f3a93", match:["AI - Ato Inseguro","SI - Situação Insegura"]},
+];
 
 let app, db, registros=[], tipoSel="ROTA_IPS", funcs=[];
 const $=id=>document.getElementById(id);
@@ -389,6 +435,71 @@ function renderDash(){
     return `<div class="bar-row"><span class="nm">${v.ico} ${v.nome}</span>
       <span class="bar-track"><span class="bar-fill" style="--c:${v.cor};width:${n/max*100}%"></span></span>
       <span class="vl">${n}</span></div>`;
+  }).join("");
+
+  renderMensal();
+  renderPiramide();
+}
+
+/* ---- gráfico de quantidade por mês ---- */
+const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+function renderMensal(){
+  // seletor de ano
+  const anos=[...new Set(registros.map(r=>(r.data||"").slice(0,4)).filter(Boolean))].sort().reverse();
+  const anoAtual=String(new Date().getFullYear());
+  if(!anos.includes(anoAtual)) anos.unshift(anoAtual);
+  const sel=$("anoSel");
+  const escolhido=sel.value||anoAtual;
+  sel.innerHTML=anos.map(a=>`<option ${a===escolhido?"selected":""}>${a}</option>`).join("");
+  sel.onchange=renderMensal;
+
+  const cont=new Array(12).fill(0);
+  registros.forEach(r=>{
+    if((r.data||"").slice(0,4)===escolhido){
+      const m=parseInt((r.data||"").slice(5,7),10)-1;
+      if(m>=0&&m<12) cont[m]++;
+    }
+  });
+  const mx=Math.max(1,...cont);
+  $("mesHost").innerHTML=cont.map((n,i)=>`
+    <div class="mcol">
+      <div class="mbar" style="height:${n?Math.max(6,n/mx*100):0}%">${n?`<span class="mval">${n}</span>`:""}</div>
+      <div class="mlab">${MESES[i].slice(0,3)}</div>
+    </div>`).join("");
+}
+
+/* ---- pirâmide de segurança (acumulado + semanal) ---- */
+function semanaAtual(){
+  const hoje=new Date();
+  const dia=(hoje.getDay()+6)%7; // 0 = segunda
+  const ini=new Date(hoje); ini.setDate(hoje.getDate()-dia); ini.setHours(0,0,0,0);
+  const fim=new Date(ini); fim.setDate(ini.getDate()+7);
+  return {ini,fim};
+}
+function contaPiramide(nivel, somenteSemana){
+  const {ini,fim}=semanaAtual();
+  return registros.filter(r=>{
+    const p=(r.dados&&r.dados.piramide)||"";
+    if(!nivel.match.includes(p)) return false;
+    if(somenteSemana){
+      const d=new Date((r.data||"")+"T00:00:00");
+      return d>=ini && d<fim;
+    }
+    return true;
+  }).length;
+}
+function renderPiramide(){
+  const totalLevels=PIRAMIDE.length;
+  $("pirHost").innerHTML=PIRAMIDE.map((nv,i)=>{
+    const acc=contaPiramide(nv,false);
+    const sem=contaPiramide(nv,true);
+    // largura crescente de cima (estreito) para baixo (largo) -> forma de pirâmide
+    const w=40+(i/(totalLevels-1))*60;
+    return `<div class="pir-row" style="background:${nv.cor};width:${w}%">
+      <div class="pv">${acc}</div>
+      <div class="pn">${nv.nome}</div>
+      <div class="pv sem">${sem}</div>
+    </div>`;
   }).join("");
 }
 
