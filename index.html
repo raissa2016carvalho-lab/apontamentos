@@ -615,6 +615,12 @@ function toast(msg,cls){
   const t=$("toast"); t.textContent=msg; t.className="toast show"+(cls?" "+cls:"");
   setTimeout(()=>t.className="toast"+(cls?" "+cls:""),2600);
 }
+function fmtData(d){
+  if(!d) return "";
+  const p=String(d).split("-");
+  if(p.length!==3) return d;
+  return `${p[2]}/${p[1]}/${p[0]}`;
+}
 </script>
 </body>
 </html>
