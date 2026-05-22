@@ -86,6 +86,8 @@
     border-radius:12px;padding:14px 15px;margin-bottom:11px}
   .rec .top{display:flex;align-items:center;gap:9px;margin-bottom:8px;flex-wrap:wrap}
   .rec .tg{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;background:var(--c);color:#0c1116;text-transform:uppercase}
+  .rec .fmh{font-size:11px;font-weight:800;color:var(--hi);background:rgba(255,207,51,.12);
+    border:1px solid rgba(255,207,51,.4);padding:2px 8px;border-radius:6px;letter-spacing:.5px}
   .rec .dt{font-size:12px;color:var(--ink-dim);margin-left:auto}
   .rec .ar{font-weight:700;font-size:15px}
   .rec .det{font-size:13px;color:var(--ink-dim);margin-top:6px;line-height:1.5}
@@ -251,19 +253,27 @@ const firebaseConfig = {
 };
 const CONFIGURADO = !firebaseConfig.apiKey.includes("COLE_AQUI");
 
-/* ---------- OS 5 TIPOS ---------- */
+/* ---------- OS TIPOS ---------- */
 const TIPOS = {
   ROTA_IPS:      { nome:"Rotas de IPS",          ico:"🚶", cor:"#4aa8ff", desc:"Inspeção planejada" },
   INTERACAO_SEG: { nome:"Interação Seg./Ações",  ico:"🤝", cor:"#34d17f", desc:"Diálogo e ações" },
   ANALISE_DOC:   { nome:"Análise Documentos",    ico:"📑", cor:"#b78bff", desc:"Conferência de docs" },
   DESVIO_COMP:   { nome:"Desvio/Comportamental", ico:"⚠️", cor:"#ff8a3d", desc:"Desvio observado" },
   ACIDENTE:      { nome:"Acidente",              ico:"🚨", cor:"#ff4d4d", desc:"Registro de evento" },
+  TREINAMENTO:   { nome:"Treinamento",           ico:"🎓", cor:"#1abc9c", desc:"Capacitação" },
+  ASO:           { nome:"ASO",                   ico:"🩺", cor:"#e67e22", desc:"Saúde ocupacional" },
+  SAIDA_EPI:     { nome:"Saída de EPI",          ico:"🦺", cor:"#16a085", desc:"Entrega de EPI" },
 };
 const CAMPOS = {
   ROTA_IPS:[
-    {k:"rota",l:"Rota / Trajeto",t:"text",ph:"Ex: Pátio → Galpão B"},
-    {k:"itens",l:"Itens verificados",t:"textarea",ph:"O que foi inspecionado"},
-    {k:"status",l:"Resultado",t:"select",opt:["Conforme","Conforme com ressalva","Não conforme"]},
+    {k:"contrato",l:"Contrato",t:"select",opt:["AMP Manutenção","AMP Engenharia"]},
+    {k:"piramide",l:"Pirâmide — em qual desvio se encaixa",t:"select",opt:["AI - Ato Inseguro","SI - Situação Insegura","QA - Quase Acidente","PS - Primeiros Socorros","SPT - Com Tratamento Médico","SPTR - Com Restrição","CPT - Com Perda de Tempo","Fatalidade"]},
+    {k:"atividade",l:"Qual atividade",t:"text",ph:"Atividade inspecionada"},
+    {k:"respAtividade",l:"Responsável pela atividade",t:"text",ph:"Nome do responsável"},
+    {k:"naoConformidade",l:"Descrever não conformidade",t:"textarea",ph:"Descreva a anomalia / desvio encontrado"},
+    {k:"statusAnomalia",l:"Status da anomalia",t:"select",opt:["Pendente","Em andamento","Concluída"]},
+    {k:"pste",l:"PSTE",t:"select",opt:["Não","Sim"]},
+    {k:"respInspecao",l:"Responsável pela inspeção",t:"text",ph:"Quem inspecionou"},
   ],
   INTERACAO_SEG:[
     {k:"tema",l:"Tema abordado",t:"text",ph:"Ex: Uso de EPI"},
@@ -283,11 +293,32 @@ const CAMPOS = {
     {k:"piramide",l:"Classificação (pirâmide)",t:"select",opt:["AI - Ato Inseguro","SI - Situação Insegura"]},
   ],
   ACIDENTE:[
-    {k:"classificacao",l:"Classificação",t:"select",opt:["Quase acidente","Sem afastamento","Com afastamento","Grave"]},
+    {k:"piramide",l:"Classificação (pirâmide)",t:"select",opt:["QA - Quase Acidente","PS - Primeiros Socorros","SPT - Com Tratamento Médico","SPTR - Com Restrição","CPT - Com Perda de Tempo","Fatalidade"]},
     {k:"descricao",l:"Descrição do ocorrido",t:"textarea",ph:"Como aconteceu"},
     {k:"lesao",l:"Houve lesão?",t:"text",ph:"Descreva ou 'Não'"},
     {k:"medidas",l:"Medidas tomadas",t:"textarea",ph:"Providências imediatas"},
-    {k:"piramide",l:"Classificação (pirâmide)",t:"select",opt:["QA - Quase Acidente","PS - Primeiros Socorros","SPT - Com Tratamento Médico","SPTR - Com Restrição","CPT - Com Perda de Tempo","Fatalidade"]},
+  ],
+  TREINAMENTO:[
+    {k:"treinamento",l:"Treinamento / NR",t:"text",ph:"Ex: NR-35 Trabalho em Altura"},
+    {k:"instrutor",l:"Instrutor / Responsável",t:"text",ph:"Quem ministrou"},
+    {k:"cargaHoraria",l:"Carga horária (h)",t:"text",ph:"Ex: 8"},
+    {k:"validade",l:"Validade / vencimento",t:"date"},
+    {k:"situacao",l:"Situação",t:"select",opt:["Concluído","Em andamento","Pendente"]},
+  ],
+  ASO:[
+    {k:"tipoAso",l:"Tipo de ASO",t:"select",opt:["Admissional","Periódico","Mudança de função","Retorno ao trabalho","Demissional"]},
+    {k:"resultado",l:"Resultado",t:"select",opt:["Apto","Apto com restrição","Inapto"]},
+    {k:"medico",l:"Médico / Clínica",t:"text",ph:"Responsável pelo exame"},
+    {k:"validade",l:"Validade do ASO",t:"date"},
+    {k:"restricoes",l:"Restrições / observações",t:"textarea",ph:"Se houver"},
+  ],
+  SAIDA_EPI:[
+    {k:"epi",l:"EPI entregue",t:"text",ph:"Ex: Capacete, Luva nitrílica, Bota"},
+    {k:"quantidade",l:"Quantidade",t:"text",ph:"Ex: 1, 2 pares"},
+    {k:"ca",l:"CA (Cert. Aprovação)",t:"text",ph:"Nº do CA"},
+    {k:"validade",l:"Validade / vencimento",t:"date"},
+    {k:"motivo",l:"Motivo da entrega",t:"select",opt:["Novo / 1ª entrega","Troca - danificado","Troca - vencido","Troca - desgaste","Reposição - perda"]},
+    {k:"assinatura",l:"Assinatura / confirmação",t:"select",opt:["Recebido e assinado","Pendente de assinatura"]},
   ],
 };
 
@@ -357,22 +388,28 @@ function montarForm(){
   const t=TIPOS[tipoSel], now=new Date();
   const data=now.toISOString().slice(0,10);
   const hora=now.toTimeString().slice(0,5);
+  // rótulos adaptados por tipo
+  const ehPessoal=["TREINAMENTO","ASO","SAIDA_EPI"].includes(tipoSel);
+  const labArea = ehPessoal ? "Área / Setor" : "Área inspecionada";
+  const labFunc = tipoSel==="SAIDA_EPI" ? "Funcionário(s) que recebeu(ram)"
+                : ehPessoal ? "Funcionário(s)" : "Funcionário(s) inspecionado(s)";
   const esp=CAMPOS[tipoSel].map(c=>{
     if(c.t==="textarea") return `<label>${c.l}</label><textarea data-k="${c.k}" placeholder="${c.ph||''}"></textarea>`;
     if(c.t==="select")   return `<label>${c.l}</label><select data-k="${c.k}">${c.opt.map(o=>`<option>${o}</option>`).join("")}</select>`;
+    if(c.t==="date")     return `<label>${c.l}</label><input type="date" data-k="${c.k}" />`;
     return `<label>${c.l}</label><input data-k="${c.k}" placeholder="${c.ph||''}" />`;
   }).join("");
   $("formHost").innerHTML=`
     <div class="card" style="--c:${t.cor}">
       <h3>${t.ico} ${t.nome} <span class="badge">${t.desc}</span></h3>
-      <p class="sub">Preencha os dados da inspeção/observação</p>
+      <p class="sub">Próximo nº: <b style="color:var(--hi)">${gerarNumeroFMH()}</b></p>
       <div class="row">
         <div><label>Data</label><input type="date" id="f_data" value="${data}"></div>
         <div><label>Hora</label><input type="time" id="f_hora" value="${hora}"></div>
       </div>
-      <label>Área inspecionada</label>
+      <label>${labArea}</label>
       <input id="f_area" placeholder="Ex: Almoxarifado, Linha 3, Pátio">
-      <label>Funcionário(s) inspecionado(s)</label>
+      <label>${labFunc}</label>
       <div class="add-row">
         <input id="f_func" placeholder="Nome do funcionário" />
         <button id="f_addFunc">＋</button>
@@ -398,11 +435,12 @@ function renderChips(){
 
 async function salvar(){
   const area=$("f_area").value.trim();
-  if(!area){toast("Informe a área inspecionada","err");return;}
+  if(!area){toast("Informe a área","err");return;}
   if(funcs.length===0){toast("Adicione ao menos um funcionário","err");return;}
   const dados={};
   $("formHost").querySelectorAll("[data-k]").forEach(el=>dados[el.dataset.k]=el.value.trim());
   const reg={
+    numero: gerarNumeroFMH(),
     tipo:tipoSel, tipoNome:TIPOS[tipoSel].nome,
     data:$("f_data").value, hora:$("f_hora").value,
     dataHora:`${$("f_data").value}T${$("f_hora").value}`,
@@ -414,10 +452,20 @@ async function salvar(){
   try{
     if(CONFIGURADO){ await addDoc(collection(db,"apontamentos"),reg); }
     else { registros.unshift({id:"local"+Date.now(),...reg,criadoEm:Date.now()}); renderHist(); }
-    toast("Apontamento registrado ✓");
+    toast(`Registrado ✓  ${reg.numero}`);
     montarForm();
   }catch(e){ toast("Erro ao salvar: "+e.message,"err"); }
   btn.disabled=false; btn.textContent="✓ Registrar apontamento";
+}
+
+/* gera número sequencial FMH-0001 sem repetir entre dispositivos */
+function gerarNumeroFMH(){
+  let maxN=0;
+  registros.forEach(r=>{
+    const m=/FMH-(\d+)/.exec(r.numero||"");
+    if(m){ const n=parseInt(m[1],10); if(n>maxN) maxN=n; }
+  });
+  return "FMH-"+String(maxN+1).padStart(4,"0");
 }
 
 /* ---------- FIRESTORE LIVE ---------- */
@@ -452,6 +500,7 @@ function renderHist(){
     }).join(" &nbsp;·&nbsp; ");
     return `<div class="rec" style="--c:${t.cor}">
       <div class="top"><span class="tg">${t.ico} ${t.nome}</span>
+        ${r.numero?`<span class="fmh">${r.numero}</span>`:""}
         <span class="dt">${fmtData(r.data)} • ${r.hora||""}</span></div>
       <div class="ar">📍 ${r.area||"—"}</div>
       ${det?`<div class="det">${det}</div>`:""}
