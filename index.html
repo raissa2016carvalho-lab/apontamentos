@@ -21,6 +21,15 @@
     -webkit-text-size-adjust:100%;
   }
   /* ===== LAYOUT SHELL ===== */
+  .login-modal{position:fixed;inset:0;background:rgba(8,11,15,.93);z-index:200;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+    backdrop-filter:blur(4px)}
+  .login-card{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--hi);
+    border-radius:16px;padding:30px 26px;width:100%;max-width:340px;text-align:center;
+    box-shadow:0 24px 60px rgba(0,0,0,.6)}
+  .login-card h2{margin:0 0 6px;font-size:19px}
+  .login-card p{margin:0 0 20px;color:var(--ink-dim);font-size:13px}
+  .login-card select{margin-bottom:16px}
   .shell{display:flex;min-height:100vh}
   .logo{
     width:40px;height:40px;flex:none;border-radius:9px;
@@ -81,6 +90,11 @@
   /* grid de gráficos lado a lado */
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
   @media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+  .dash-filters{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+  .dash-filters select,.dash-filters input{margin-bottom:0;flex:1;min-width:140px;padding:10px 12px;font-size:13px}
+  .btn-clear{background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);
+    padding:10px 16px;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .btn-clear:hover{color:var(--ink);border-color:var(--hi)}
 
   /* responsivo: vira menu ☰ */
   @media(max-width:820px){
@@ -197,6 +211,17 @@
 </head>
 <body>
 
+<!-- modal: quem está usando -->
+<div id="loginModal" class="login-modal">
+  <div class="login-card">
+    <div class="logo" style="margin:0 auto 14px;width:54px;height:54px;font-size:28px">⚠️</div>
+    <h2>Quem está registrando?</h2>
+    <p>Selecione seu nome para começar</p>
+    <select id="loginSelect"><option value="">— selecione —</option></select>
+    <button class="btn" id="loginBtn">Entrar</button>
+  </div>
+</div>
+
 <button id="menuToggle" class="menu-toggle">☰</button>
 <div id="backdrop" class="backdrop"></div>
 
@@ -244,6 +269,15 @@
     <!-- PAINEL / ANÁLISE -->
     <section id="view-dash">
       <h2 class="page-title">📊 Análise de Segurança</h2>
+      <div class="filters dash-filters">
+        <select id="dfContrato"><option value="">Todos os contratos</option></select>
+        <select id="dfArea"><option value="">Todas as áreas</option></select>
+        <select id="dfStatus"><option value="">Todos os status</option></select>
+        <select id="dfResp"><option value="">Todos responsáveis</option></select>
+        <input id="dfDe" type="date" title="De" />
+        <input id="dfAte" type="date" title="Até" />
+        <button id="dfLimpar" class="btn-clear">Limpar</button>
+      </div>
       <div id="placarHost"></div>
       <div class="stat-grid" id="statGrid"></div>
 
@@ -300,67 +334,35 @@ const firebaseConfig = {
 };
 const CONFIGURADO = !firebaseConfig.apiKey.includes("COLE_AQUI");
 
+/* ============================================================
+   LISTAS TABELADAS (valores reais da operação)
+   ============================================================ */
+const AREAS = ["Pátio matéria prima","Alto forno","CTE","Granulação 01","Lingotamento","Aciaria","BSSF","Pátio de placas","Sinterização","Linhas férreas","Laboratório da matéria prima","GTP","ETA","Coqueria","Canteiro granulação 01","Canteiro granulação 02"];
+const RESPONSAVEIS = ["Leone","Fábio","Jesley","Alan"];
+const CONTRATOS = ["FMH Manutenção","FMH Engenharia"];
+const EQUIPE = ["Weverton","Aldo","Maykow","Bianca","Juliana","Leone","Fábio","Alan","Jesley","Romário","Yago","Dário","Hugo","Gedeon","Emanuel"];
+const EPIS = ["Óculos escuro","Óculos incolor","Óculos ampla visão","Máscara de solda","Protetor auricular plug","Protetor auricular concha","Respirador PFF2","Respirador semifacial","Filtro químico","Filtro mecânico","Capacete","Mangote de raspa","Avental de raspa","Blusão de raspa","Luva de vaqueta cano longo","Luva de vaqueta cano curto","Fardamento camiseta azul","Fardamento calça azul","Fardamento camiseta cinza","Fardamento calça cinza","Protetor facial","Suporte protetor facial","Luva multitato"];
+const PIRAMIDE_OPT = ["AI - Ato Inseguro","SI - Situação Insegura","QA - Quase Acidente","PS - Primeiros Socorros","SPT - Com Tratamento Médico","SPTR - Com Restrição","CPT - Com Perda de Tempo","Fatalidade"];
+const DESVIO_OPT = ["Documentação","EPI","Isolamento/Sinalização","Máquinas, Equip. e Ferramentas","5S-Organização","Meio Ambiente","Ergonomia Deficiente","Comportamento Inseguro","Condição Insegura"];
+
 /* ---------- OS TIPOS ---------- */
 const TIPOS = {
-  ROTA_IPS:      { nome:"Rotas de IPS",          ico:"🚶", cor:"#4aa8ff", desc:"Inspeção planejada" },
-  INTERACAO_SEG: { nome:"Interação Seg./Ações",  ico:"🤝", cor:"#34d17f", desc:"Diálogo e ações" },
-  ANALISE_DOC:   { nome:"Análise Documentos",    ico:"📑", cor:"#b78bff", desc:"Conferência de docs" },
-  DESVIO_COMP:   { nome:"Desvio/Comportamental", ico:"⚠️", cor:"#ff8a3d", desc:"Desvio observado" },
-  ACIDENTE:      { nome:"Acidente",              ico:"🚨", cor:"#ff4d4d", desc:"Registro de evento" },
-  TREINAMENTO:   { nome:"Treinamento",           ico:"🎓", cor:"#1abc9c", desc:"Capacitação" },
-  ASO:           { nome:"ASO",                   ico:"🩺", cor:"#e67e22", desc:"Saúde ocupacional" },
-  SAIDA_EPI:     { nome:"Saída de EPI",          ico:"🦺", cor:"#16a085", desc:"Entrega de EPI" },
+  IPS:       { nome:"IPS",          ico:"🚶", cor:"#4aa8ff", desc:"Inspeção de segurança" },
+  SAIDA_EPI: { nome:"Saída de EPI", ico:"🦺", cor:"#16a085", desc:"Entrega de EPI" },
 };
 const CAMPOS = {
-  ROTA_IPS:[
-    {k:"contrato",l:"Contrato",t:"select",opt:["AMP Manutenção","AMP Engenharia"]},
-    {k:"piramide",l:"Pirâmide — em qual desvio se encaixa",t:"select",opt:["AI - Ato Inseguro","SI - Situação Insegura","QA - Quase Acidente","PS - Primeiros Socorros","SPT - Com Tratamento Médico","SPTR - Com Restrição","CPT - Com Perda de Tempo","Fatalidade"]},
-    {k:"atividade",l:"Qual atividade",t:"text",ph:"Atividade inspecionada"},
-    {k:"respAtividade",l:"Responsável pela atividade",t:"text",ph:"Nome do responsável"},
-    {k:"naoConformidade",l:"Descrever não conformidade",t:"textarea",ph:"Descreva a anomalia / desvio encontrado"},
+  IPS:[
+    {k:"contrato",l:"Contrato",t:"select",opt:CONTRATOS},
+    {k:"atividade",l:"Qual atividade",t:"textarea",ph:"Descreva a atividade inspecionada"},
+    {k:"respAtividade",l:"Responsável pela atividade",t:"select",opt:RESPONSAVEIS},
+    {k:"naoConformidade",l:"O que houve — não conformidade",t:"textarea",ph:"Descreva o que foi encontrado"},
+    {k:"piramide",l:"Classificação na pirâmide",t:"select",opt:PIRAMIDE_OPT},
+    {k:"categoria",l:"Classificação do desvio/anomalia",t:"select",opt:DESVIO_OPT},
     {k:"statusAnomalia",l:"Status da anomalia",t:"select",opt:["Pendente","Em andamento","Concluída"]},
-    {k:"pste",l:"PSTE",t:"select",opt:["Não","Sim"]},
-    {k:"respInspecao",l:"Responsável pela inspeção",t:"text",ph:"Quem inspecionou"},
-  ],
-  INTERACAO_SEG:[
-    {k:"tema",l:"Tema abordado",t:"text",ph:"Ex: Uso de EPI"},
-    {k:"acao",l:"Ação / orientação",t:"textarea",ph:"Descreva a interação"},
-    {k:"reincidencia",l:"Reincidência?",t:"select",opt:["Não","Sim"]},
-  ],
-  ANALISE_DOC:[
-    {k:"documento",l:"Documento analisado",t:"text",ph:"Ex: PT, APR, Checklist"},
-    {k:"status",l:"Situação",t:"select",opt:["Aprovado","Pendente","Reprovado"]},
-    {k:"pendencias",l:"Pendências / observações",t:"textarea",ph:"O que precisa corrigir"},
-  ],
-  DESVIO_COMP:[
-    {k:"categoria",l:"Categoria do desvio",t:"select",opt:["Documentação","EPI","Isolamento/Sinalização","Máquinas, Equip. e Ferramentas","5S-Organização","Meio Ambiente","Ergonomia Deficiente","Comportamento Inseguro","Condição Insegura"]},
-    {k:"descricao",l:"Descrição do desvio",t:"textarea",ph:"O que foi observado"},
-    {k:"risco",l:"Nível de risco",t:"select",opt:["Baixo","Médio","Alto","Crítico"]},
-    {k:"correcao",l:"Ação corretiva",t:"textarea",ph:"Medida adotada / recomendada"},
-    {k:"piramide",l:"Classificação (pirâmide)",t:"select",opt:["AI - Ato Inseguro","SI - Situação Insegura"]},
-  ],
-  ACIDENTE:[
-    {k:"piramide",l:"Classificação (pirâmide)",t:"select",opt:["QA - Quase Acidente","PS - Primeiros Socorros","SPT - Com Tratamento Médico","SPTR - Com Restrição","CPT - Com Perda de Tempo","Fatalidade"]},
-    {k:"descricao",l:"Descrição do ocorrido",t:"textarea",ph:"Como aconteceu"},
-    {k:"lesao",l:"Houve lesão?",t:"text",ph:"Descreva ou 'Não'"},
-    {k:"medidas",l:"Medidas tomadas",t:"textarea",ph:"Providências imediatas"},
-  ],
-  TREINAMENTO:[
-    {k:"treinamento",l:"Treinamento / NR",t:"text",ph:"Ex: NR-35 Trabalho em Altura"},
-    {k:"instrutor",l:"Instrutor / Responsável",t:"text",ph:"Quem ministrou"},
-    {k:"cargaHoraria",l:"Carga horária (h)",t:"text",ph:"Ex: 8"},
-    {k:"validade",l:"Validade / vencimento",t:"date"},
-    {k:"situacao",l:"Situação",t:"select",opt:["Concluído","Em andamento","Pendente"]},
-  ],
-  ASO:[
-    {k:"tipoAso",l:"Tipo de ASO",t:"select",opt:["Admissional","Periódico","Mudança de função","Retorno ao trabalho","Demissional"]},
-    {k:"resultado",l:"Resultado",t:"select",opt:["Apto","Apto com restrição","Inapto"]},
-    {k:"medico",l:"Médico / Clínica",t:"text",ph:"Responsável pelo exame"},
-    {k:"validade",l:"Validade do ASO",t:"date"},
-    {k:"restricoes",l:"Restrições / observações",t:"textarea",ph:"Se houver"},
+    {k:"psif",l:"PSIF",t:"select",opt:["Não","Sim"]},
   ],
   SAIDA_EPI:[
-    {k:"epi",l:"EPI entregue",t:"text",ph:"Ex: Capacete, Luva nitrílica, Bota"},
+    {k:"epi",l:"EPI entregue",t:"select",opt:EPIS},
     {k:"quantidade",l:"Quantidade",t:"text",ph:"Ex: 1, 2 pares"},
     {k:"ca",l:"CA (Cert. Aprovação)",t:"text",ph:"Nº do CA"},
     {k:"validade",l:"Validade / vencimento",t:"date"},
@@ -396,7 +398,7 @@ const CATEGORIAS = [
 /* ---- placar de dias sem acidentes ---- */
 const DATA_BASE_ACIDENTE = "2025-10-01"; // 01/10/2025
 
-let app, db, registros=[], tipoSel="ROTA_IPS", funcs=[];
+let app, db, registros=[], tipoSel="IPS", funcs=[], usuario="";
 const $=id=>document.getElementById(id);
 
 if(CONFIGURADO){
@@ -410,6 +412,23 @@ if(CONFIGURADO){
 }
 
 montarTipos(); popularFiltro(); renderHist();
+
+/* ===== IDENTIFICAÇÃO (escolher nome) ===== */
+$("loginSelect").innerHTML='<option value="">— selecione —</option>'+
+  EQUIPE.map(n=>`<option>${n}</option>`).join("");
+$("loginBtn").onclick=()=>{
+  const n=$("loginSelect").value;
+  if(!n){toast("Selecione seu nome","err");return;}
+  usuario=n;
+  $("loginModal").classList.add("hidden");
+  $("sideFoot").innerHTML=`<span style="color:var(--ok)">●</span> ${usuario} · trocar`;
+  $("sideFoot").style.cursor="pointer";
+  $("sideFoot").onclick=trocarUsuario;
+  if(!$("view-novo").classList.contains("hidden")) montarForm();
+};
+function trocarUsuario(){
+  $("loginModal").classList.remove("hidden");
+}
 
 /* ===== NAVEGAÇÃO SIDEBAR ===== */
 function setView(view, tipo){
@@ -458,27 +477,26 @@ function montarForm(){
   const t=TIPOS[tipoSel], now=new Date();
   const data=now.toISOString().slice(0,10);
   const hora=now.toTimeString().slice(0,5);
-  // rótulos adaptados por tipo
-  const ehPessoal=["TREINAMENTO","ASO","SAIDA_EPI"].includes(tipoSel);
-  const labArea = ehPessoal ? "Área / Setor" : "Área inspecionada";
-  const labFunc = tipoSel==="SAIDA_EPI" ? "Funcionário(s) que recebeu(ram)"
-                : ehPessoal ? "Funcionário(s)" : "Funcionário(s) inspecionado(s)";
+  const ehEPI = tipoSel==="SAIDA_EPI";
+  const labFunc = ehEPI ? "Funcionário(s) que recebeu(ram)" : "Funcionário(s) envolvido(s)";
   const esp=CAMPOS[tipoSel].map(c=>{
     if(c.t==="textarea") return `<label>${c.l}</label><textarea data-k="${c.k}" placeholder="${c.ph||''}"></textarea>`;
     if(c.t==="select")   return `<label>${c.l}</label><select data-k="${c.k}">${c.opt.map(o=>`<option>${o}</option>`).join("")}</select>`;
     if(c.t==="date")     return `<label>${c.l}</label><input type="date" data-k="${c.k}" />`;
     return `<label>${c.l}</label><input data-k="${c.k}" placeholder="${c.ph||''}" />`;
   }).join("");
+  // área: select tabelado
+  const areaField = `<label>Área inspecionada</label>
+    <select id="f_area"><option value="">— selecione a área —</option>${AREAS.map(a=>`<option>${a}</option>`).join("")}</select>`;
   $("formHost").innerHTML=`
     <div class="card" style="--c:${t.cor}">
       <h3>${t.ico} ${t.nome} <span class="badge">${t.desc}</span></h3>
-      <p class="sub">Próximo nº: <b style="color:var(--hi)">${gerarNumeroFMH()}</b></p>
+      <p class="sub">Próximo nº: <b style="color:var(--hi)">${gerarNumeroFMH()}</b> · Responsável: <b>${usuario||"—"}</b></p>
       <div class="row">
         <div><label>Data</label><input type="date" id="f_data" value="${data}"></div>
         <div><label>Hora</label><input type="time" id="f_hora" value="${hora}"></div>
       </div>
-      <label>${labArea}</label>
-      <input id="f_area" placeholder="Ex: Almoxarifado, Linha 3, Pátio">
+      ${areaField}
       <label>${labFunc}</label>
       <div class="add-row">
         <input id="f_func" placeholder="Nome do funcionário" />
@@ -488,7 +506,7 @@ function montarForm(){
       ${esp}
       <label>Observações gerais</label>
       <textarea id="f_obs" placeholder="Informações adicionais (opcional)"></textarea>
-      <button class="btn" id="f_salvar">✓ Registrar apontamento</button>
+      <button class="btn" id="f_salvar">✓ Registrar ${t.nome}</button>
     </div>`;
   $("f_addFunc").onclick=addFunc;
   $("f_func").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addFunc();}});
@@ -504,9 +522,9 @@ function renderChips(){
 }
 
 async function salvar(){
+  if(!usuario){toast("Selecione seu nome primeiro","err");return;}
   const area=$("f_area").value.trim();
-  if(!area){toast("Informe a área","err");return;}
-  if(funcs.length===0){toast("Adicione ao menos um funcionário","err");return;}
+  if(!area){toast("Selecione a área","err");return;}
   const dados={};
   $("formHost").querySelectorAll("[data-k]").forEach(el=>dados[el.dataset.k]=el.value.trim());
   const reg={
@@ -515,6 +533,7 @@ async function salvar(){
     data:$("f_data").value, hora:$("f_hora").value,
     dataHora:`${$("f_data").value}T${$("f_hora").value}`,
     area, funcionarios:[...funcs], dados,
+    respInspecao: usuario,
     obs:$("f_obs").value.trim(),
     criadoEm:CONFIGURADO?serverTimestamp():Date.now()
   };
@@ -525,7 +544,7 @@ async function salvar(){
     toast(`Registrado ✓  ${reg.numero}`);
     montarForm();
   }catch(e){ toast("Erro ao salvar: "+e.message,"err"); }
-  btn.disabled=false; btn.textContent="✓ Registrar apontamento";
+  btn.disabled=false; btn.textContent="✓ Registrar "+TIPOS[tipoSel].nome;
 }
 
 /* gera número sequencial FMH-0001 sem repetir entre dispositivos */
@@ -559,9 +578,11 @@ function renderHist(){
   const ft=$("fType").value, fs=($("fSearch").value||"").toLowerCase();
   let list=registros.filter(r=>(!ft||r.tipo===ft));
   if(fs) list=list.filter(r=>(r.area||"").toLowerCase().includes(fs)||
+    (r.numero||"").toLowerCase().includes(fs)||
+    (r.respInspecao||"").toLowerCase().includes(fs)||
     (r.funcionarios||[]).join(" ").toLowerCase().includes(fs));
   const host=$("histList");
-  if(list.length===0){host.innerHTML='<div class="empty">Nenhum apontamento ainda.<br>Vá em <b>＋ Novo</b> para registrar.</div>';return;}
+  if(list.length===0){host.innerHTML='<div class="empty">Nenhum registro encontrado.</div>';return;}
   host.innerHTML=list.map(r=>{
     const t=TIPOS[r.tipo]||{cor:"#888",ico:"•",nome:r.tipo};
     const det=Object.entries(r.dados||{}).filter(([,v])=>v).map(([k,v])=>{
@@ -575,7 +596,10 @@ function renderHist(){
       <div class="ar">📍 ${r.area||"—"}</div>
       ${det?`<div class="det">${det}</div>`:""}
       ${r.obs?`<div class="det"><b>Obs:</b> ${r.obs}</div>`:""}
-      <div class="ppl">${(r.funcionarios||[]).map(f=>`<span>👤 ${f}</span>`).join("")}</div>
+      <div class="ppl">
+        ${(r.funcionarios||[]).map(f=>`<span>👤 ${f}</span>`).join("")}
+        ${r.respInspecao?`<span style="border-color:var(--hi);color:var(--hi)">🔎 ${r.respInspecao}</span>`:""}
+      </div>
       <button class="del" data-id="${r.id}">🗑 Excluir</button>
     </div>`;
   }).join("");
@@ -588,45 +612,83 @@ async function excluir(id){
 }
 
 /* ---------- PAINEL ---------- */
+/* ===== FILTROS DO PAINEL ===== */
+function popularFiltrosDash(){
+  const set=(id,arr,label)=>{
+    const el=$(id); if(!el) return;
+    const atual=el.value;
+    el.innerHTML=`<option value="">${label}</option>`+arr.map(x=>`<option ${x===atual?"selected":""}>${x}</option>`).join("");
+  };
+  set("dfContrato",CONTRATOS,"Todos os contratos");
+  set("dfArea",AREAS,"Todas as áreas");
+  set("dfStatus",["Pendente","Em andamento","Concluída"],"Todos os status");
+  set("dfResp",EQUIPE,"Todos responsáveis");
+  ["dfContrato","dfArea","dfStatus","dfResp","dfDe","dfAte"].forEach(id=>{
+    const el=$(id); if(el) el.onchange=renderDash;
+  });
+  const lim=$("dfLimpar");
+  if(lim) lim.onclick=()=>{["dfContrato","dfArea","dfStatus","dfResp","dfDe","dfAte"].forEach(id=>{if($(id))$(id).value="";});renderDash();};
+}
+function registrosFiltrados(){
+  const c=$("dfContrato")?$("dfContrato").value:"";
+  const a=$("dfArea")?$("dfArea").value:"";
+  const s=$("dfStatus")?$("dfStatus").value:"";
+  const rp=$("dfResp")?$("dfResp").value:"";
+  const de=$("dfDe")?$("dfDe").value:"";
+  const ate=$("dfAte")?$("dfAte").value:"";
+  return registros.filter(r=>{
+    if(c && (r.dados&&r.dados.contrato)!==c) return false;
+    if(a && r.area!==a) return false;
+    if(s && (r.dados&&r.dados.statusAnomalia)!==s) return false;
+    if(rp && r.respInspecao!==rp) return false;
+    if(de && (r.data||"")<de) return false;
+    if(ate && (r.data||"")>ate) return false;
+    return true;
+  });
+}
+
 function renderDash(){
-  const total=registros.length;
+  popularFiltrosDash();
+  const regs=registrosFiltrados();
+  const total=regs.length;
   const hoje=new Date().toISOString().slice(0,10);
-  const hojeN=registros.filter(r=>r.data===hoje).length;
-  const funcsUnic=new Set(); registros.forEach(r=>(r.funcionarios||[]).forEach(f=>funcsUnic.add(f)));
-  const areas=new Set(registros.map(r=>r.area).filter(Boolean));
+  const hojeN=regs.filter(r=>r.data===hoje).length;
+  const funcsUnic=new Set(); regs.forEach(r=>(r.funcionarios||[]).forEach(f=>funcsUnic.add(f)));
+  const areas=new Set(regs.map(r=>r.area).filter(Boolean));
+  const pendentes=regs.filter(r=>(r.dados&&r.dados.statusAnomalia)==="Pendente").length;
   $("statGrid").innerHTML=`
-    <div class="stat" style="--c:var(--hi)"><div class="n">${total}</div><div class="l">Total de apontamentos</div></div>
+    <div class="stat" style="--c:var(--hi)"><div class="n">${total}</div><div class="l">Total de registros</div></div>
     <div class="stat" style="--c:var(--ok)"><div class="n">${hojeN}</div><div class="l">Registrados hoje</div></div>
-    <div class="stat" style="--c:var(--blue)"><div class="n">${funcsUnic.size}</div><div class="l">Funcionários</div></div>
-    <div class="stat" style="--c:var(--warn)"><div class="n">${areas.size}</div><div class="l">Áreas</div></div>`;
-  const max=Math.max(1,...Object.keys(TIPOS).map(k=>registros.filter(r=>r.tipo===k).length));
+    <div class="stat" style="--c:var(--warn)"><div class="n">${pendentes}</div><div class="l">Anomalias pendentes</div></div>
+    <div class="stat" style="--c:var(--blue)"><div class="n">${areas.size}</div><div class="l">Áreas inspecionadas</div></div>`;
+  const max=Math.max(1,...Object.keys(TIPOS).map(k=>regs.filter(r=>r.tipo===k).length));
   $("barsHost").innerHTML=Object.entries(TIPOS).map(([k,v])=>{
-    const n=registros.filter(r=>r.tipo===k).length;
+    const n=regs.filter(r=>r.tipo===k).length;
     return `<div class="bar-row"><span class="nm">${v.ico} ${v.nome}</span>
       <span class="bar-track"><span class="bar-fill" style="--c:${v.cor};width:${n/max*100}%"></span></span>
       <span class="vl">${n}</span></div>`;
   }).join("");
 
-  renderMensal();
-  renderPiramide();
-  renderPlacar();
-  renderDonut();
+  renderMensal(regs);
+  renderPiramide(regs);
+  renderPlacar(regs);
+  renderDonut(regs);
 }
 
 /* ---- gráfico de quantidade por mês ---- */
 const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-function renderMensal(){
-  // seletor de ano
+function renderMensal(regs){
+  regs=regs||registrosFiltrados();
   const anos=[...new Set(registros.map(r=>(r.data||"").slice(0,4)).filter(Boolean))].sort().reverse();
   const anoAtual=String(new Date().getFullYear());
   if(!anos.includes(anoAtual)) anos.unshift(anoAtual);
   const sel=$("anoSel");
   const escolhido=sel.value||anoAtual;
   sel.innerHTML=anos.map(a=>`<option ${a===escolhido?"selected":""}>${a}</option>`).join("");
-  sel.onchange=renderMensal;
+  sel.onchange=()=>renderMensal();
 
   const cont=new Array(12).fill(0);
-  registros.forEach(r=>{
+  regs.forEach(r=>{
     if((r.data||"").slice(0,4)===escolhido){
       const m=parseInt((r.data||"").slice(5,7),10)-1;
       if(m>=0&&m<12) cont[m]++;
@@ -648,9 +710,9 @@ function semanaAtual(){
   const fim=new Date(ini); fim.setDate(ini.getDate()+7);
   return {ini,fim};
 }
-function contaPiramide(nivel, somenteSemana){
+function contaPiramide(regs, nivel, somenteSemana){
   const {ini,fim}=semanaAtual();
-  return registros.filter(r=>{
+  return regs.filter(r=>{
     const p=(r.dados&&r.dados.piramide)||"";
     if(!nivel.match.includes(p)) return false;
     if(somenteSemana){
@@ -660,12 +722,12 @@ function contaPiramide(nivel, somenteSemana){
     return true;
   }).length;
 }
-function renderPiramide(){
+function renderPiramide(regs){
+  regs=regs||registrosFiltrados();
   const totalLevels=PIRAMIDE.length;
   $("pirHost").innerHTML=PIRAMIDE.map((nv,i)=>{
-    const acc=contaPiramide(nv,false);
-    const sem=contaPiramide(nv,true);
-    // largura crescente de cima (estreito) para baixo (largo) -> forma de pirâmide
+    const acc=contaPiramide(regs,nv,false);
+    const sem=contaPiramide(regs,nv,true);
     const w=40+(i/(totalLevels-1))*60;
     return `<div class="pir-row" style="background:${nv.cor};width:${w}%">
       <div class="pv">${acc}</div>
@@ -675,11 +737,16 @@ function renderPiramide(){
   }).join("");
 }
 
-/* ---- placar de dias sem acidentes ---- */
-function renderPlacar(){
-  // acha o acidente mais recente registrado
+/* ---- placar de dias sem acidentes ----
+   acidente = registro classificado na pirâmide como PS ou pior */
+const NIVEIS_ACIDENTE=["PS - Primeiros Socorros","SPT - Com Tratamento Médico","SPTR - Com Restrição","CPT - Com Perda de Tempo","Fatalidade"];
+function renderPlacar(regs){
+  regs=regs||registrosFiltrados();
   let ultimo=DATA_BASE_ACIDENTE;
-  registros.forEach(r=>{ if(r.tipo==="ACIDENTE" && r.data && r.data>ultimo) ultimo=r.data; });
+  regs.forEach(r=>{
+    const p=(r.dados&&r.dados.piramide)||"";
+    if(NIVEIS_ACIDENTE.includes(p) && r.data && r.data>ultimo) ultimo=r.data;
+  });
   const base=new Date(ultimo+"T00:00:00");
   const hoje=new Date(); hoje.setHours(0,0,0,0);
   const dias=Math.max(0,Math.floor((hoje-base)/86400000));
@@ -694,11 +761,12 @@ function renderPlacar(){
     </div>`;
 }
 
-/* ---- donut: principais desvios ---- */
-function renderDonut(){
+/* ---- donut: principais desvios (categoria está no IPS) ---- */
+function renderDonut(regs){
+  regs=regs||registrosFiltrados();
   const dados=CATEGORIAS.map(c=>({
     ...c,
-    n:registros.filter(r=>r.tipo==="DESVIO_COMP" && r.dados && r.dados.categoria===c.nome).length
+    n:regs.filter(r=>r.dados && r.dados.categoria===c.nome).length
   }));
   const total=dados.reduce((s,d)=>s+d.n,0);
   const svg=$("donutSvg");
