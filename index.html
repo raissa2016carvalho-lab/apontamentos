@@ -293,7 +293,7 @@
         <div class="bars"><h4>Apontamentos por tipo</h4><div id="barsHost"></div></div>
         <div class="bars">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px">
-            <h4 style="margin:0">Quantidade por mês</h4>
+            <h4 style="margin:0">Anomalias por mês</h4>
             <select id="anoSel" style="width:auto;margin:0;padding:9px 34px 9px 12px;font-size:14px"></select>
           </div>
           <div id="mesHost" class="month-chart"></div>
@@ -337,7 +337,13 @@
         <div id="epiHost"></div>
       </div>
 
-      <div class="grid-2">
+      <div class="bars" style="margin-top:16px;padding-bottom:6px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <h4 style="margin:0">Ranking de anomalias por mês</h4>
+          <input type="month" id="rankMes" style="width:auto;margin:0;padding:9px 12px;font-size:14px" />
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:11px">
         <div class="bars">
           <h4>🔎 Quem mais abriu anomalia</h4>
           <div id="abriuHost"></div>
@@ -812,7 +818,8 @@ function renderMensal(regs){
 
   const cont=new Array(12).fill(0);
   regs.forEach(r=>{
-    if((r.data||"").slice(0,4)===escolhido){
+    // conta só anomalias: IPS com não conformidade preenchida
+    if(r.tipo==="IPS" && r.dados && r.dados.naoConformidade && (r.data||"").slice(0,4)===escolhido){
       const m=parseInt((r.data||"").slice(5,7),10)-1;
       if(m>=0&&m<12) cont[m]++;
     }
@@ -980,9 +987,18 @@ function renderEpiMes(regs){
       <span class="vl">${n}</span></div>`).join("");
 }
 
-/* ---- ranking: quem abriu (responsável) e quem levou (funcionário) anomalia ---- */
+/* ---- ranking: quem abriu (responsável) e quem levou (funcionário) anomalia, por mês ---- */
 function renderRanking(regs){
-  const anomalias=regs.filter(r=>r.tipo==="IPS" && r.dados && r.dados.naoConformidade);
+  // inicializa o seletor de mês com o mês atual, se vazio
+  const sel=$("rankMes");
+  if(sel && !sel.value){
+    const now=new Date();
+    sel.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+    sel.onchange=()=>renderRanking(registrosFiltrados());
+  }
+  const mes = sel ? sel.value : ""; // formato "YYYY-MM"
+  let anomalias=regs.filter(r=>r.tipo==="IPS" && r.dados && r.dados.naoConformidade);
+  if(mes) anomalias=anomalias.filter(r=>(r.data||"").slice(0,7)===mes);
   // quem abriu = respInspecao
   const abriu={};
   anomalias.forEach(r=>{ const p=r.respInspecao||"—"; abriu[p]=(abriu[p]||0)+1; });
