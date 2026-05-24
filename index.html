@@ -95,6 +95,12 @@
   .btn-clear{background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);
     padding:10px 16px;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
   .btn-clear:hover{color:var(--ink);border-color:var(--hi)}
+  .adm-row{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .adm-nome{flex:1;min-width:140px;font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}
+  .adm-tag{font-size:10px;font-weight:800;background:var(--hi);color:var(--hi-ink);padding:2px 8px;border-radius:20px}
+  .adm-row input{margin:0;flex:1;min-width:120px;max-width:200px;padding:9px 11px;font-size:14px}
+  .adm-save{background:var(--hi);color:var(--hi-ink);border:none;padding:9px 16px;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
+  .adm-save:active{transform:translateY(1px)}
 
   /* responsivo: vira menu ☰ */
   @media(max-width:820px){
@@ -211,13 +217,15 @@
 </head>
 <body>
 
-<!-- modal: quem está usando -->
+<!-- modal: login -->
 <div id="loginModal" class="login-modal">
   <div class="login-card">
     <div class="logo" style="margin:0 auto 14px;width:54px;height:54px;font-size:28px">⚠️</div>
-    <h2>Quem está registrando?</h2>
-    <p>Selecione seu nome para começar</p>
+    <h2>Entrar no sistema</h2>
+    <p>Selecione seu nome e digite a senha</p>
     <select id="loginSelect"><option value="">— selecione —</option></select>
+    <input id="loginPass" type="password" placeholder="Senha" />
+    <div id="loginErr" style="display:none;color:#ffb3b3;font-size:13px;margin:-6px 0 12px"></div>
     <button class="btn" id="loginBtn">Entrar</button>
   </div>
 </div>
@@ -306,6 +314,48 @@
           </div>
         </div>
       </div>
+
+      <div class="grid-2">
+        <div class="bars">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px">
+            <h4 style="margin:0">PSIF por mês</h4>
+            <select id="anoPsif" style="width:auto;margin:0;padding:9px 34px 9px 12px;font-size:14px"></select>
+          </div>
+          <div id="psifHost" class="month-chart"></div>
+        </div>
+        <div class="bars">
+          <h4>Anomalias por status</h4>
+          <div id="statusHost"></div>
+        </div>
+      </div>
+
+      <div class="bars" style="margin-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px">
+          <h4 style="margin:0">Saída de EPI por mês</h4>
+          <select id="anoEpi" style="width:auto;margin:0;padding:9px 34px 9px 12px;font-size:14px"></select>
+        </div>
+        <div id="epiHost"></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="bars">
+          <h4>🔎 Quem mais abriu anomalia</h4>
+          <div id="abriuHost"></div>
+        </div>
+        <div class="bars">
+          <h4>👤 Quem mais levou anomalia</h4>
+          <div id="levouHost"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN: gerenciar senhas (só Adm) -->
+    <section id="view-adm" class="hidden">
+      <h2 class="page-title">🔑 Gerenciar senhas</h2>
+      <div class="card" style="--c:var(--hi)">
+        <p class="sub">Apenas a administradora vê esta tela. Aqui você redefine a senha de cada usuário.</p>
+        <div id="admList"></div>
+      </div>
     </section>
   </main>
 </div>
@@ -344,6 +394,37 @@ const EQUIPE = ["Weverton","Aldo","Maykow","Bianca","Juliana","Leone","Fábio","
 const EPIS = ["Óculos escuro","Óculos incolor","Óculos ampla visão","Máscara de solda","Protetor auricular plug","Protetor auricular concha","Respirador PFF2","Respirador semifacial","Filtro químico","Filtro mecânico","Capacete","Mangote de raspa","Avental de raspa","Blusão de raspa","Luva de vaqueta cano longo","Luva de vaqueta cano curto","Fardamento camiseta azul","Fardamento calça azul","Fardamento camiseta cinza","Fardamento calça cinza","Protetor facial","Suporte protetor facial","Luva multitato"];
 const PIRAMIDE_OPT = ["AI - Ato Inseguro","SI - Situação Insegura","QA - Quase Acidente","PS - Primeiros Socorros","SPT - Com Tratamento Médico","SPTR - Com Restrição","CPT - Com Perda de Tempo","Fatalidade"];
 const DESVIO_OPT = ["Documentação","EPI","Isolamento/Sinalização","Máquinas, Equip. e Ferramentas","5S-Organização","Meio Ambiente","Ergonomia Deficiente","Comportamento Inseguro","Condição Insegura"];
+
+/* ============================================================
+   USUÁRIOS E SENHAS (login simples — fase de teste)
+   perfil: "adm" vê tudo e administra senhas; "user" vê painel + registro IPS
+   As senhas começam padrão; a Maria (Adm) pode trocar pela tela de admin.
+   ============================================================ */
+const USUARIOS_PADRAO = [
+  {nome:"Maria Katherine", senha:"admin123", perfil:"adm"},
+  {nome:"Weverton", senha:"123", perfil:"user"},
+  {nome:"Aldo",     senha:"123", perfil:"user"},
+  {nome:"Maykow",   senha:"123", perfil:"user"},
+  {nome:"Bianca",   senha:"123", perfil:"user"},
+  {nome:"Juliana",  senha:"123", perfil:"user"},
+  {nome:"Leone",    senha:"123", perfil:"user"},
+  {nome:"Fábio",    senha:"123", perfil:"user"},
+  {nome:"Alan",     senha:"123", perfil:"user"},
+  {nome:"Jesley",   senha:"123", perfil:"user"},
+  {nome:"Romário",  senha:"123", perfil:"user"},
+  {nome:"Yago",     senha:"123", perfil:"user"},
+  {nome:"Dário",    senha:"123", perfil:"user"},
+  {nome:"Hugo",     senha:"123", perfil:"user"},
+  {nome:"Gedeon",   senha:"123", perfil:"user"},
+  {nome:"Emanuel",  senha:"123", perfil:"user"},
+];
+// carrega senhas salvas (alteradas pela Maria) deste navegador, se houver
+let USUARIOS = USUARIOS_PADRAO.map(u=>({...u}));
+try{
+  const salvo=JSON.parse(window.localStorage.getItem("fmh_usuarios")||"null");
+  if(salvo && Array.isArray(salvo)) USUARIOS=salvo;
+}catch(e){}
+function salvarUsuarios(){ try{window.localStorage.setItem("fmh_usuarios",JSON.stringify(USUARIOS));}catch(e){} }
 
 /* ---------- OS TIPOS ---------- */
 const TIPOS = {
@@ -398,7 +479,7 @@ const CATEGORIAS = [
 /* ---- placar de dias sem acidentes ---- */
 const DATA_BASE_ACIDENTE = "2025-10-01"; // 01/10/2025
 
-let app, db, registros=[], tipoSel="IPS", funcs=[], usuario="";
+let app, db, registros=[], tipoSel="IPS", funcs=[], usuario="", perfil="";
 const $=id=>document.getElementById(id);
 
 if(CONFIGURADO){
@@ -413,28 +494,65 @@ if(CONFIGURADO){
 
 montarTipos(); popularFiltro(); renderHist();
 
-/* ===== IDENTIFICAÇÃO (escolher nome) ===== */
-$("loginSelect").innerHTML='<option value="">— selecione —</option>'+
-  EQUIPE.map(n=>`<option>${n}</option>`).join("");
-$("loginBtn").onclick=()=>{
+/* ===== LOGIN (com senha e perfil) ===== */
+function preencherLoginSelect(){
+  $("loginSelect").innerHTML='<option value="">— selecione —</option>'+
+    USUARIOS.map(u=>`<option>${u.nome}</option>`).join("");
+}
+preencherLoginSelect();
+function tentarLogin(){
   const n=$("loginSelect").value;
-  if(!n){toast("Selecione seu nome","err");return;}
-  usuario=n;
+  const s=$("loginPass").value;
+  const err=$("loginErr");
+  if(!n){err.style.display="block";err.textContent="Selecione seu nome.";return;}
+  const u=USUARIOS.find(x=>x.nome===n);
+  if(!u || u.senha!==s){err.style.display="block";err.textContent="Senha incorreta.";return;}
+  err.style.display="none";
+  usuario=u.nome; perfil=u.perfil;
+  $("loginPass").value="";
   $("loginModal").classList.add("hidden");
-  $("sideFoot").innerHTML=`<span style="color:var(--ok)">●</span> ${usuario} · trocar`;
+  aplicarPerfil();
+  $("sideFoot").innerHTML=`<span style="color:var(--ok)">●</span> ${usuario}${perfil==="adm"?" (Adm)":""} · sair`;
   $("sideFoot").style.cursor="pointer";
-  $("sideFoot").onclick=trocarUsuario;
-  if(!$("view-novo").classList.contains("hidden")) montarForm();
-};
-function trocarUsuario(){
+  $("sideFoot").onclick=logout;
+  setView("dash");
+}
+$("loginBtn").onclick=tentarLogin;
+$("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")tentarLogin();});
+
+function logout(){
+  usuario=""; perfil="";
   $("loginModal").classList.remove("hidden");
+}
+
+/* mostra/esconde itens conforme o perfil */
+function aplicarPerfil(){
+  const ehAdm = perfil==="adm";
+  // Saída de EPI e Histórico: só Adm. User vê Painel + IPS.
+  const epiItem=document.querySelector('.nav-item[data-tipo="SAIDA_EPI"]');
+  const histItem=document.querySelector('.nav-item[data-view="hist"]');
+  if(epiItem) epiItem.style.display = ehAdm ? "" : "none";
+  if(histItem) histItem.style.display = ehAdm ? "" : "none";
+  // item de administração de senhas (só Adm)
+  let admItem=document.getElementById("navAdm");
+  if(ehAdm && !admItem){
+    admItem=document.createElement("button");
+    admItem.id="navAdm"; admItem.className="nav-item"; admItem.dataset.view="adm";
+    admItem.innerHTML='<span class="ni">🔑</span> Gerenciar senhas';
+    admItem.onclick=()=>setView("adm");
+    document.querySelector(".nav .nav-group:last-of-type").after(admItem);
+  }
+  if(admItem) admItem.style.display = ehAdm ? "" : "none";
 }
 
 /* ===== NAVEGAÇÃO SIDEBAR ===== */
 function setView(view, tipo){
+  // proteção de perfil: user não acessa EPI, histórico nem admin
+  if(perfil!=="adm" && (view==="hist" || view==="adm" || (view==="novo" && tipo==="SAIDA_EPI"))){
+    toast("Acesso restrito à administradora","err"); return;
+  }
   // esconde todas as seções
-  ["novo","hist","dash"].forEach(v=>$("view-"+v).classList.add("hidden"));
-  // marca item ativo
+  ["novo","hist","dash","adm"].forEach(v=>$("view-"+v).classList.add("hidden"));
   document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
   if(view==="novo"){
     tipoSel=tipo;
@@ -447,8 +565,9 @@ function setView(view, tipo){
     const it=document.querySelector(`.nav-item[data-view="${view}"]`);
     if(it) it.classList.add("active");
     if(view==="dash") renderDash();
+    if(view==="adm") renderAdm();
   }
-  fecharMenu(); // fecha menu no celular
+  fecharMenu();
   window.scrollTo(0,0);
 }
 
@@ -673,6 +792,10 @@ function renderDash(){
   renderPiramide(regs);
   renderPlacar(regs);
   renderDonut(regs);
+  renderPsif(regs);
+  renderStatus(regs);
+  renderEpiMes(regs);
+  renderRanking(regs);
 }
 
 /* ---- gráfico de quantidade por mês ---- */
@@ -798,6 +921,106 @@ function renderDonut(regs){
       <span class="vl">${d.n}</span>
     </div>`).join("");
 }
+/* ---- PSIF por mês ---- */
+function renderPsif(regs){
+  const anos=[...new Set(registros.map(r=>(r.data||"").slice(0,4)).filter(Boolean))].sort().reverse();
+  const anoAtual=String(new Date().getFullYear());
+  if(!anos.includes(anoAtual)) anos.unshift(anoAtual);
+  const sel=$("anoPsif"); const escolhido=sel.value||anoAtual;
+  sel.innerHTML=anos.map(a=>`<option ${a===escolhido?"selected":""}>${a}</option>`).join("");
+  sel.onchange=()=>renderDash();
+  const cont=new Array(12).fill(0);
+  regs.forEach(r=>{
+    if(r.tipo==="IPS" && (r.dados&&r.dados.psif)==="Sim" && (r.data||"").slice(0,4)===escolhido){
+      const m=parseInt((r.data||"").slice(5,7),10)-1; if(m>=0&&m<12) cont[m]++;
+    }
+  });
+  const mx=Math.max(1,...cont);
+  $("psifHost").innerHTML=cont.map((n,i)=>`
+    <div class="mcol"><div class="mbar" style="height:${n?Math.max(6,n/mx*100):0}%;background:var(--danger)">${n?`<span class="mval">${n}</span>`:""}</div>
+    <div class="mlab">${MESES[i].slice(0,3)}</div></div>`).join("");
+}
+
+/* ---- anomalias por status ---- */
+function renderStatus(regs){
+  const STATUS=[{n:"Pendente",c:"#ff8a3d"},{n:"Em andamento",c:"#4aa8ff"},{n:"Concluída",c:"#34d17f"}];
+  const ips=regs.filter(r=>r.tipo==="IPS" && r.dados && r.dados.naoConformidade);
+  const max=Math.max(1,...STATUS.map(s=>ips.filter(r=>r.dados.statusAnomalia===s.n).length));
+  $("statusHost").innerHTML=STATUS.map(s=>{
+    const n=ips.filter(r=>r.dados.statusAnomalia===s.n).length;
+    return `<div class="bar-row"><span class="nm">${s.n}</span>
+      <span class="bar-track"><span class="bar-fill" style="--c:${s.c};width:${n/max*100}%"></span></span>
+      <span class="vl">${n}</span></div>`;
+  }).join("");
+}
+
+/* ---- saída de EPI por mês (por tipo de EPI) ---- */
+function renderEpiMes(regs){
+  const anos=[...new Set(registros.filter(r=>r.tipo==="SAIDA_EPI").map(r=>(r.data||"").slice(0,4)).filter(Boolean))].sort().reverse();
+  const anoAtual=String(new Date().getFullYear());
+  if(!anos.includes(anoAtual)) anos.unshift(anoAtual);
+  const sel=$("anoEpi"); const escolhido=sel.value||anoAtual;
+  sel.innerHTML=anos.map(a=>`<option ${a===escolhido?"selected":""}>${a}</option>`).join("");
+  sel.onchange=()=>renderDash();
+  // soma por tipo de EPI no ano
+  const porEpi={};
+  regs.forEach(r=>{
+    if(r.tipo==="SAIDA_EPI" && (r.data||"").slice(0,4)===escolhido){
+      const e=(r.dados&&r.dados.epi)||"—";
+      const q=parseInt((r.dados&&r.dados.quantidade)||"1",10)||1;
+      porEpi[e]=(porEpi[e]||0)+q;
+    }
+  });
+  const linhas=Object.entries(porEpi).sort((a,b)=>b[1]-a[1]);
+  if(linhas.length===0){ $("epiHost").innerHTML='<div class="empty" style="padding:20px">Nenhuma saída de EPI em '+escolhido+'</div>'; return; }
+  const max=Math.max(1,...linhas.map(l=>l[1]));
+  $("epiHost").innerHTML=linhas.map(([e,n])=>`
+    <div class="bar-row"><span class="nm" style="width:200px">${e}</span>
+      <span class="bar-track"><span class="bar-fill" style="--c:#16a085;width:${n/max*100}%"></span></span>
+      <span class="vl">${n}</span></div>`).join("");
+}
+
+/* ---- ranking: quem abriu (responsável) e quem levou (funcionário) anomalia ---- */
+function renderRanking(regs){
+  const anomalias=regs.filter(r=>r.tipo==="IPS" && r.dados && r.dados.naoConformidade);
+  // quem abriu = respInspecao
+  const abriu={};
+  anomalias.forEach(r=>{ const p=r.respInspecao||"—"; abriu[p]=(abriu[p]||0)+1; });
+  // quem levou = funcionários envolvidos
+  const levou={};
+  anomalias.forEach(r=>(r.funcionarios||[]).forEach(f=>{ levou[f]=(levou[f]||0)+1; }));
+  $("abriuHost").innerHTML=rankHtml(abriu,"#4aa8ff");
+  $("levouHost").innerHTML=rankHtml(levou,"#ff8a3d");
+}
+function rankHtml(obj,cor){
+  const linhas=Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if(linhas.length===0) return '<div class="empty" style="padding:20px">Sem dados</div>';
+  const max=Math.max(1,...linhas.map(l=>l[1]));
+  return linhas.map(([nome,n])=>`
+    <div class="bar-row"><span class="nm">${nome}</span>
+      <span class="bar-track"><span class="bar-fill" style="--c:${cor};width:${n/max*100}%"></span></span>
+      <span class="vl">${n}</span></div>`).join("");
+}
+
+/* ---- ADMIN: gerenciar senhas ---- */
+function renderAdm(){
+  $("admList").innerHTML=USUARIOS.map((u,i)=>`
+    <div class="adm-row">
+      <div class="adm-nome">${u.nome} ${u.perfil==="adm"?'<span class="adm-tag">Adm</span>':''}</div>
+      <input type="text" id="adm_s_${i}" value="${u.senha}" placeholder="nova senha" />
+      <button class="adm-save" data-i="${i}">Salvar</button>
+    </div>`).join("");
+  $("admList").querySelectorAll(".adm-save").forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i;
+    const nova=$("adm_s_"+i).value.trim();
+    if(!nova){toast("Senha não pode ficar vazia","err");return;}
+    USUARIOS[i].senha=nova;
+    salvarUsuarios();
+    preencherLoginSelect();
+    toast(`Senha de ${USUARIOS[i].nome} atualizada ✓`);
+  });
+}
+
 function toast(msg,cls){
   const t=$("toast"); t.textContent=msg; t.className="toast show"+(cls?" "+cls:"");
   setTimeout(()=>t.className="toast"+(cls?" "+cls:""),2600);
@@ -809,8 +1032,7 @@ function fmtData(d){
   return `${p[2]}/${p[1]}/${p[0]}`;
 }
 
-/* abre na tela de Análise ao carregar (após tudo definido) */
-setView("dash");
+/* a entrada no painel acontece após o login (tentarLogin → setView) */
 </script>
 </body>
 </html>
