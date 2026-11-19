@@ -19,3 +19,13 @@
 -- Incluir um usuário novo (SQL Editor do Supabase):
 --   insert into seg_usuarios(nome, perfil, senha_hash) values ('Nome', 'user', extensions.crypt('123', extensions.gen_salt('bf')));
 -- Desativar um usuário:  update seg_usuarios set ativo = false where nome = 'Nome';
+
+-- 19/11/2026 (2ª parte)
+--   Registros zerados a pedido (cópia em seg_apontamentos_backup_20261119: os 257 migrados do Firebase). Numeração recomeça em FMH-0001.
+--   seg_funcionarios: efetivo de 16/11/2026 (78 pessoas, 4 em experiência e 5 em parada) + matriz de treinamento FMH-AMP
+--     (68 pessoas; 37 delas não estão no efetivo e ficam marcadas "fora do efetivo"). Total 115.
+--     dados (jsonb): líder, mat_amp, admissão, ghe, situação, integracao, gas_pq, bloqueio, ppeob (feito em) e as validades
+--     aso, nr35, po_icamento, po_veiculos, nr33, sinaleiro, nr12, nr11_munck, direcao_defensiva, nr11_talha, nr10_basico,
+--     nr10_sep, nr18_plataforma, nr34_quente, nr05_cipa, fit_teste, cnh (+ cnh_tipo, fardamento, bota, cinto_tag).
+--     Dados pessoais da planilha (CPF, RG, CTPS, PIS, telefones, endereço, mãe, nascimento, nº da CNH) NÃO foram carregados.
+--   Funções: seg_funcionarios_listar(token); seg_funcionario_salvar(token, json) e seg_matriz_definir(token, id, campo, valor) — só administradora.
