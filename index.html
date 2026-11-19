@@ -145,6 +145,47 @@
   .del{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:12px;margin-top:8px}
   .empty{text-align:center;color:var(--ink-dim);padding:50px 20px;font-size:14px}
 
+  /* ===== MATRIZ DE TREINAMENTO ===== */
+  .mx-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+  .mx-kpi{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:12px;padding:12px 14px;cursor:pointer}
+  .mx-kpi .n{font-size:26px;font-weight:800;line-height:1}.mx-kpi .l{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;margin-top:5px}
+  .mx-kpi.on{outline:2px solid var(--c)}
+  .mx-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:calc(100vh - 290px);background:var(--panel)}
+  table.mx{border-collapse:separate;border-spacing:0;font-size:12px;min-width:100%}
+  table.mx th,table.mx td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:6px 7px;white-space:nowrap;text-align:center}
+  table.mx thead th{position:sticky;top:0;background:var(--panel-2);z-index:2;font-size:10.5px;color:var(--ink-dim);font-weight:700;text-transform:uppercase;letter-spacing:.3px;max-width:86px;white-space:normal;line-height:1.2}
+  table.mx th.nm,table.mx td.nm{position:sticky;left:0;background:var(--panel);z-index:1;text-align:left;min-width:230px;max-width:260px;white-space:normal}
+  table.mx thead th.nm{z-index:3;background:var(--panel-2)}
+  table.mx td.nm b{font-size:13px;display:block}
+  table.mx td.nm small{color:var(--ink-dim);font-size:11px}
+  table.mx th.grp{background:#202b35;color:var(--hi)}
+  table.mx thead tr:first-child th.grp{height:28px;padding:4px 7px}
+  table.mx thead tr:nth-child(2) th{top:28px}
+  .mx-tag{display:inline-block;font-size:9.5px;font-weight:800;border-radius:5px;padding:1px 6px;margin-left:4px;vertical-align:1px;text-transform:uppercase}
+  .mx-tag.fora{background:#3a2530;color:#ff9db0}.mx-tag.exp{background:#1f3347;color:#8fc8ff}.mx-tag.par{background:#3b331c;color:#ffd46b}
+  table.mx td.c{cursor:default;min-width:70px;font-variant-numeric:tabular-nums}
+  table.mx td.c.ed{cursor:pointer}table.mx td.c.ed:hover{outline:2px solid var(--hi);outline-offset:-2px}
+  table.mx td.v{background:rgba(255,77,77,.18);color:#ff9b9b;font-weight:700}
+  table.mx td.a{background:rgba(255,138,61,.16);color:#ffc08f;font-weight:700}
+  table.mx td.k{color:#8ee6b4}
+  table.mx td.f{color:var(--ink)}
+  table.mx td.z{color:#3d4a56}
+  .mx-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-dim);margin:10px 2px 0}
+  .mx-leg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .mx-bar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .mx-bar input,.mx-bar select{margin:0;flex:1;min-width:150px}
+  .mx-bar .bt{flex:none;background:var(--hi);color:var(--hi-ink);border:none;border-radius:11px;padding:11px 16px;font-weight:800;cursor:pointer;font-size:14px}
+  .mx-modal{position:fixed;inset:0;background:rgba(5,8,12,.75);z-index:150;display:flex;align-items:center;justify-content:center;padding:16px}
+  .mx-modal .box{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--hi);border-radius:14px;padding:20px;width:100%;max-width:460px;max-height:90vh;overflow:auto}
+  .mx-modal h3{margin:0 0 4px;font-size:17px}.mx-modal .sub{margin:0 0 14px}
+  .mx-modal .g2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+  .mx-modal .acts{display:flex;gap:9px;justify-content:flex-end;margin-top:6px;flex-wrap:wrap}
+  .mx-modal .acts button{border:none;border-radius:10px;padding:11px 16px;font-weight:800;cursor:pointer;font-size:14px}
+  .mx-modal .ok{background:var(--hi);color:var(--hi-ink)}.mx-modal .no{background:var(--panel-2);color:var(--ink);border:1px solid var(--line)!important}
+  .mx-modal .del2{background:none;color:var(--danger);margin-right:auto}
+  .mx-modal label.ck{display:flex;align-items:center;gap:8px;font-size:14px;margin:4px 0 12px;color:var(--ink)}
+  .mx-modal label.ck input{width:18px;height:18px;margin:0}
+
   .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:11px;margin-bottom:18px}
   .stat{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:12px;padding:16px 14px}
   .stat .n{font-size:30px;font-weight:800;line-height:1}
@@ -250,6 +291,7 @@
 
       <div class="nav-group">Consultar</div>
       <button class="nav-item" data-view="hist"><span class="ni">📋</span> Histórico</button>
+      <button class="nav-item" data-view="matriz"><span class="ni">🎓</span> Matriz de treinamento</button>
     </nav>
 
     <div class="side-foot" id="sideFoot"></div>
@@ -353,6 +395,24 @@
           <div id="levouHost"></div>
         </div>
       </div>
+    </section>
+
+    <!-- MATRIZ DE TREINAMENTO -->
+    <section id="view-matriz" class="hidden">
+      <h2 class="page-title">🎓 Matriz de treinamento</h2>
+      <div class="mx-kpis" id="mxKpis"></div>
+      <div class="mx-bar">
+        <input id="mxBusca" placeholder="🔍 Buscar nome ou função" />
+        <select id="mxSit">
+          <option value="efetivo">Efetivo atual</option>
+          <option value="todos">Todos (inclui fora do efetivo)</option>
+          <option value="fora">Só fora do efetivo</option>
+        </select>
+        <select id="mxFunc"><option value="">Todas as funções</option></select>
+        <button class="bt somente-adm" id="mxNovo">＋ Funcionário</button>
+      </div>
+      <div class="mx-wrap"><div id="mxHost"><div class="loading"><div class="spin"></div></div></div></div>
+      <div class="mx-leg"><span><i style="background:rgba(255,77,77,.5)"></i>Vencido</span><span><i style="background:rgba(255,138,61,.5)"></i>Vence em até 30 dias</span><span><i style="background:#2f6e4f"></i>Em dia</span><span><i style="background:#2a3540"></i>Sem registro</span><span id="mxDica"></span></div>
     </section>
 
     <!-- ADMIN: gerenciar senhas (só Adm) -->
@@ -493,7 +553,7 @@ function entrou(sess){
   $("sideFoot").innerHTML=`<span style="color:var(--ok)">●</span> ${usuario}${perfil==="adm"?" (Adm)":""} · sair`;
   $("sideFoot").style.cursor="pointer";
   $("sideFoot").onclick=logout;
-  carregarRegistros();
+  carregarRegistros(); carregarFuncionarios();
   clearInterval(timerAtualiza); timerAtualiza=setInterval(carregarRegistros, 30000);  // atualiza sozinho a cada 30 s
   setView("dash");
 }
@@ -545,6 +605,7 @@ function aplicarPerfil(){
     document.querySelector(".nav .nav-group:last-of-type").after(admItem);
   }
   if(admItem) admItem.style.display = ehAdm ? "" : "none";
+  document.querySelectorAll(".somente-adm").forEach(el=>el.style.display = ehAdm ? "" : "none");
 }
 
 /* ===== NAVEGAÇÃO SIDEBAR ===== */
@@ -554,7 +615,7 @@ function setView(view, tipo){
     toast("Acesso restrito à administradora","err"); return;
   }
   // esconde todas as seções
-  ["novo","hist","dash","adm"].forEach(v=>$("view-"+v).classList.add("hidden"));
+  ["novo","hist","dash","adm","matriz"].forEach(v=>$("view-"+v).classList.add("hidden"));
   document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
   if(view==="novo"){
     tipoSel=tipo;
@@ -568,6 +629,7 @@ function setView(view, tipo){
     if(it) it.classList.add("active");
     if(view==="dash") renderDash();
     if(view==="adm") renderAdm();
+    if(view==="matriz") renderMatriz();
   }
   fecharMenu();
   window.scrollTo(0,0);
@@ -620,7 +682,7 @@ function montarForm(){
       ${areaField}
       <label>${labFunc}</label>
       <div class="add-row">
-        <input id="f_func" placeholder="Nome do funcionário" />
+        <input id="f_func" placeholder="Nome do funcionário" list="listaFunc" autocomplete="off" />
         <button id="f_addFunc">＋</button>
       </div>
       <div class="chips" id="f_chips"></div>
@@ -677,6 +739,143 @@ function gerarNumeroFMH(){
 }
 
 /* ---------- FIRESTORE LIVE ---------- */
+
+/* ============================================================
+   FUNCIONÁRIOS + MATRIZ DE TREINAMENTO (tabela seg_funcionarios)
+   ============================================================ */
+let FUNCS=[], mxFiltroKpi="";
+// colunas da matriz: tipo "feito" = data em que fez (sem validade); "val" = válido até
+const MX_COLS=[
+  {k:"integracao",l:"Integração",t:"feito",g:"Integração"},
+  {k:"gas_pq",l:"Gás e PQ",t:"feito",g:"Integração"},
+  {k:"bloqueio",l:"Bloqueio",t:"feito",g:"Integração"},
+  {k:"ppeob",l:"PPEOB",t:"feito",g:"Integração"},
+  {k:"aso",l:"ASO",t:"val",g:"Validade"},
+  {k:"nr35",l:"NR 35",t:"val",g:"Validade"},
+  {k:"po_icamento",l:"PO-170013 Içamento",t:"val",g:"Validade"},
+  {k:"po_veiculos",l:"PO-170012 Veículos e equip. móveis",t:"val",g:"Validade"},
+  {k:"nr33",l:"NR 33",t:"val",g:"Validade"},
+  {k:"sinaleiro",l:"Sinaleiro",t:"val",g:"Validade"},
+  {k:"nr12",l:"NR 12 Máquinas e equip.",t:"val",g:"Validade"},
+  {k:"nr11_munck",l:"NR 11 Munck (guindauto)",t:"val",g:"Validade"},
+  {k:"direcao_defensiva",l:"Direção defensiva",t:"val",g:"Validade"},
+  {k:"nr11_talha",l:"NR 11 Talha elétrica",t:"val",g:"Validade"},
+  {k:"nr10_basico",l:"NR 10 Básico",t:"val",g:"Validade"},
+  {k:"nr10_sep",l:"NR 10 SEP",t:"val",g:"Validade"},
+  {k:"nr18_plataforma",l:"NR 18 Plataforma elevatória",t:"val",g:"Validade"},
+  {k:"nr34_quente",l:"NR 34 Trabalho a quente",t:"val",g:"Validade"},
+  {k:"nr05_cipa",l:"NR 05 CIPA",t:"val",g:"Validade"},
+  {k:"fit_teste",l:"Fit teste respiradores",t:"val",g:"Validade"},
+  {k:"cnh",l:"CNH",t:"val",g:"Validade"},
+];
+const MX_AVISO=30; // dias para "vence em breve"
+const esc2=t=>String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtD=d=>d?d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(2,4):"";
+function diasAte(d){ if(!d) return null; const h=new Date(); h.setHours(0,0,0,0); return Math.round((new Date(d+"T00:00:00")-h)/864e5); }
+function estado(col,v){ if(!v) return "z"; if(col.t==="feito") return "f"; const n=diasAte(v); return n<0?"v":n<=MX_AVISO?"a":"k"; }
+
+async function carregarFuncionarios(){
+  if(!TOKEN) return;
+  try{
+    FUNCS=(await rpc("seg_funcionarios_listar",{p_token:TOKEN}))||[];
+    let dl=document.getElementById("listaFunc");
+    if(!dl){ dl=document.createElement("datalist"); dl.id="listaFunc"; document.body.appendChild(dl); }
+    dl.innerHTML=FUNCS.filter(f=>f.ativo&&f.efetivo).map(f=>`<option value="${esc2(f.nome)}">${esc2(f.funcao||"")}</option>`).join("");
+    if(!$("view-matriz").classList.contains("hidden")) renderMatriz();
+  }catch(e){ toast("Erro ao carregar funcionários: "+e.message,"err"); }
+}
+
+function mxLista(){
+  const sit=$("mxSit").value, fn=$("mxFunc").value, q=($("mxBusca").value||"").toLowerCase().trim();
+  return FUNCS.filter(f=>f.ativo)
+    .filter(f=>sit==="todos"||(sit==="fora"?!f.efetivo:f.efetivo))
+    .filter(f=>!fn||(f.funcao||"")===fn)
+    .filter(f=>!q||(f.nome+" "+(f.funcao||"")).toLowerCase().includes(q));
+}
+function contaEstados(f){ let v=0,a=0; MX_COLS.forEach(c=>{const e=estado(c,f.dados[c.k]); if(e==="v")v++; if(e==="a")a++;}); return {v,a}; }
+
+function renderMatriz(){
+  if(!FUNCS.length){ carregarFuncionarios(); }
+  const fs=$("mxFunc"), atual=fs.value;
+  const funcoes=[...new Set(FUNCS.filter(f=>f.ativo).map(f=>f.funcao).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  fs.innerHTML='<option value="">Todas as funções</option>'+funcoes.map(x=>`<option ${x===atual?"selected":""}>${esc2(x)}</option>`).join("");
+  let L=mxLista();
+  const comV=L.filter(f=>contaEstados(f).v>0), comA=L.filter(f=>contaEstados(f).a>0), semM=L.filter(f=>!MX_COLS.some(c=>f.dados[c.k]));
+  const kp=(id,c,n,l)=>`<div class="mx-kpi ${mxFiltroKpi===id?"on":""}" style="--c:${c}" data-k="${id}"><div class="n">${n}</div><div class="l">${l}</div></div>`;
+  $("mxKpis").innerHTML=kp("","var(--blue)",L.length,"Pessoas")+kp("v","var(--danger)",comV.length,"Com treinamento vencido")+
+    kp("a","var(--warn)",comA.length,"Vence em até "+MX_AVISO+" dias")+kp("s","#5b6b78",semM.length,"Sem nada na matriz");
+  $("mxKpis").querySelectorAll(".mx-kpi").forEach(d=>d.onclick=()=>{ mxFiltroKpi=mxFiltroKpi===d.dataset.k?"":d.dataset.k; renderMatriz(); });
+  if(mxFiltroKpi==="v") L=comV; else if(mxFiltroKpi==="a") L=comA; else if(mxFiltroKpi==="s") L=semM;
+  const ehAdm=perfil==="adm";
+  $("mxDica").textContent=ehAdm?"Clique numa data para alterar, ou no nome para editar o funcionário.":"";
+  if(!L.length){ $("mxHost").innerHTML='<div class="empty">Nenhum funcionário com esses filtros.</div>'; return; }
+  const nInt=MX_COLS.filter(c=>c.g==="Integração").length, nVal=MX_COLS.length-nInt;
+  let h='<table class="mx"><thead><tr><th class="nm" rowspan="2">Funcionário</th><th rowspan="2">Líder</th><th rowspan="2">Admissão</th>'+
+    `<th class="grp" colspan="${nInt}">Integração (feito em)</th><th class="grp" colspan="${nVal}">Válido até</th><th rowspan="2">Farda / Bota</th><th rowspan="2">Cinto TAG</th></tr><tr>`+
+    MX_COLS.map(c=>`<th title="${esc2(c.l)}">${esc2(c.l)}</th>`).join("")+'</tr></thead><tbody>';
+  h+=L.map(f=>{
+    const d=f.dados||{}, sit=d.situacao;
+    const tags=(!f.efetivo?'<span class="mx-tag fora">fora do efetivo</span>':'')+(sit==="experiência"?'<span class="mx-tag exp">experiência</span>':'')+(sit==="parada"?'<span class="mx-tag par">parada</span>':'');
+    return `<tr><td class="nm ${ehAdm?"c ed":""}" data-id="${f.id}" data-acao="pessoa"><b>${esc2(f.nome)}${tags}</b><small>${esc2(f.funcao||"—")}${d.mat_amp?" · Mat. AMP "+esc2(d.mat_amp):""}${d.cnh_tipo?" · CNH "+esc2(d.cnh_tipo.toUpperCase()):""}</small></td>`+
+      `<td>${esc2(d.lider||"")}</td><td>${fmtD(d.admissao)}</td>`+
+      MX_COLS.map(c=>{ const v=d[c.k], e=estado(c,v), n=diasAte(v);
+        const tt=!v?"Sem registro":c.t==="feito"?"Feito em "+fmtD(v):(n<0?"Vencido há "+(-n)+" dias":"Faltam "+n+" dias");
+        return `<td class="c ${e} ${ehAdm?"ed":""}" data-id="${f.id}" data-k="${c.k}" title="${esc2(c.l)}: ${tt}">${v?fmtD(v):"·"}</td>`; }).join("")+
+      `<td>${esc2([d.fardamento,d.bota].filter(Boolean).join(" / "))}</td><td>${esc2(d.cinto_tag||"")}</td></tr>`;
+  }).join("")+'</tbody></table>';
+  $("mxHost").innerHTML=h;
+  if(ehAdm) $("mxHost").querySelectorAll("td.ed").forEach(td=>td.onclick=()=>{
+    const f=FUNCS.find(x=>x.id===+td.dataset.id); if(!f) return;
+    td.dataset.acao==="pessoa"?mxEditarPessoa(f):mxEditarData(f,MX_COLS.find(c=>c.k===td.dataset.k));
+  });
+}
+["mxBusca","mxSit","mxFunc"].forEach(id=>{ const el=$(id); el.addEventListener(id==="mxBusca"?"input":"change",()=>renderMatriz()); });
+$("mxNovo").onclick=()=>mxEditarPessoa(null);
+
+function mxModal(html){ const m=document.createElement("div"); m.className="mx-modal"; m.innerHTML='<div class="box">'+html+'</div>';
+  m.onclick=e=>{ if(e.target===m) m.remove(); }; document.body.appendChild(m); return m; }
+
+function mxEditarData(f,c){
+  const v=(f.dados||{})[c.k]||"";
+  const m=mxModal(`<h3>${esc2(c.l)}</h3><p class="sub">${esc2(f.nome)} · ${c.t==="feito"?"data em que fez":"válido até"}</p>
+    <label>Data</label><input type="date" id="mxDt" value="${v}">
+    <div class="acts">${v?'<button class="del2" id="mxApaga">Apagar data</button>':''}<button class="no" id="mxCanc">Cancelar</button><button class="ok" id="mxOk">Salvar</button></div>`);
+  const salvar=async val=>{ try{ await rpc("seg_matriz_definir",{p_token:TOKEN,p_id:f.id,p_campo:c.k,p_valor:val}); m.remove(); toast("Matriz atualizada ✓"); await carregarFuncionarios(); }catch(e){ toast("Erro: "+e.message,"err"); } };
+  m.querySelector("#mxCanc").onclick=()=>m.remove();
+  m.querySelector("#mxOk").onclick=()=>salvar(m.querySelector("#mxDt").value);
+  const ap=m.querySelector("#mxApaga"); if(ap) ap.onclick=()=>{ if(confirm("Apagar esta data?")) salvar(""); };
+  m.querySelector("#mxDt").focus();
+}
+
+function mxEditarPessoa(f){
+  const d=(f&&f.dados)||{};
+  const m=mxModal(`<h3>${f?"Editar funcionário":"Novo funcionário"}</h3><p class="sub">${f?esc2(f.nome):"Entra no efetivo e na lista de funcionários do formulário"}</p>
+    <label>Nome</label><input id="mpNome" value="${esc2(f?f.nome:"")}">
+    <label>Função</label><input id="mpFunc" value="${esc2(f?f.funcao||"":"")}">
+    <div class="g2"><div><label>Líder</label><input id="mpLider" value="${esc2(d.lider||"")}"></div>
+      <div><label>Mat. AMP</label><input id="mpMat" value="${esc2(d.mat_amp||"")}"></div>
+      <div><label>Admissão</label><input type="date" id="mpAdm" value="${esc2(d.admissao||"")}"></div>
+      <div><label>Situação</label><select id="mpSit"><option value="">Normal</option><option ${d.situacao==="experiência"?"selected":""}>experiência</option><option ${d.situacao==="parada"?"selected":""}>parada</option></select></div>
+      <div><label>Fardamento (tam.)</label><input id="mpFarda" value="${esc2(d.fardamento||"")}"></div>
+      <div><label>Bota (nº)</label><input id="mpBota" value="${esc2(d.bota||"")}"></div>
+      <div><label>Cinto TAG</label><input id="mpTag" value="${esc2(d.cinto_tag||"")}"></div>
+      <div><label>CNH categoria</label><input id="mpCnh" value="${esc2(d.cnh_tipo||"")}"></div></div>
+    <label class="ck"><input type="checkbox" id="mpEf" ${!f||f.efetivo?"checked":""}> Está no efetivo atual</label>
+    ${f?'<label class="ck"><input type="checkbox" id="mpInat"> Desligado (tirar da matriz e da lista)</label>':''}
+    <div class="acts"><button class="no" id="mpCanc">Cancelar</button><button class="ok" id="mpOk">Salvar</button></div>`);
+  m.querySelector("#mpCanc").onclick=()=>m.remove();
+  m.querySelector("#mpOk").onclick=async()=>{
+    const g=id=>m.querySelector(id).value.trim();
+    const p={nome:g("#mpNome"),funcao:g("#mpFunc"),efetivo:m.querySelector("#mpEf").checked,
+      dados:{lider:g("#mpLider"),mat_amp:g("#mpMat"),admissao:g("#mpAdm"),situacao:g("#mpSit"),fardamento:g("#mpFarda"),bota:g("#mpBota"),cinto_tag:g("#mpTag"),cnh_tipo:g("#mpCnh")}};
+    if(!p.nome){ toast("Informe o nome","err"); return; }
+    if(f){ p.id=f.id; const ina=m.querySelector("#mpInat"); if(ina&&ina.checked){ if(!confirm("Marcar "+f.nome+" como desligado?")) return; p.ativo=false; } }
+    try{ await rpc("seg_funcionario_salvar",{p_token:TOKEN,p}); m.remove(); toast("Funcionário salvo ✓"); await carregarFuncionarios(); }
+    catch(e){ toast("Erro: "+e.message,"err"); }
+  };
+  m.querySelector("#mpNome").focus();
+}
+
 async function carregarRegistros(){
   if(!TOKEN) return;
   try{
