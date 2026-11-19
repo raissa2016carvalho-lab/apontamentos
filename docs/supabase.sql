@@ -1,0 +1,21 @@
+-- Banco do "Apontamento de Segurança em Campo" no Supabase (projeto seguranca-campo, sa-east-1). 19/11/2026.
+-- Antes: Firebase (projeto seguranca-53af8, coleção "apontamentos", aberta para leitura pública).
+-- Agora: tabelas sem acesso direto do site; tudo passa por funções que exigem login (token de sessão).
+--
+-- Tabelas
+--   seg_usuarios      nome, perfil (adm/user), senha criptografada (bcrypt). Senhas iniciais = as de antes (adm: admin123, demais: 123).
+--   seg_sessoes       token de login (vale 30 dias); trocar a senha de alguém derruba as sessões dessa pessoa.
+--   seg_apontamentos  os registros (IPS e Saída de EPI). firebase_id = id do documento antigo (257 migrados em 19/11/2026).
+--
+-- Funções chamadas pelo site (rpc)
+--   seg_usuarios_lista()                       nomes para a tela de login
+--   seg_login(nome, senha) → {token,nome,perfil}
+--   seg_sair(token)
+--   seg_apontamentos_listar(token)             todos os registros (painel e histórico)
+--   seg_apontamento_criar(token, json) → nº    o número FMH-0000 é gerado no banco (não repete)
+--   seg_apontamento_excluir(token, id)         só administradora
+--   seg_adm_usuarios(token) / seg_adm_senha(token, nome, senha)   só administradora
+--
+-- Incluir um usuário novo (SQL Editor do Supabase):
+--   insert into seg_usuarios(nome, perfil, senha_hash) values ('Nome', 'user', extensions.crypt('123', extensions.gen_salt('bf')));
+-- Desativar um usuário:  update seg_usuarios set ativo = false where nome = 'Nome';

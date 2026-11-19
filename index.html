@@ -359,7 +359,7 @@
     <section id="view-adm" class="hidden">
       <h2 class="page-title">🔑 Gerenciar senhas</h2>
       <div class="card" style="--c:var(--hi)">
-        <p class="sub">Apenas a administradora vê esta tela. Aqui você redefine a senha de cada usuário.</p>
+        <p class="sub">Apenas a administradora vê esta tela. Aqui você redefine a senha de cada usuário. A senha nova vale em todos os aparelhos.</p>
         <div id="admList"></div>
       </div>
     </section>
@@ -369,26 +369,33 @@
 <div id="toast" class="toast"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getFirestore, collection, addDoc, deleteDoc, doc,
-  query, orderBy, onSnapshot, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
 /* ============================================================
-   👉 COLE AQUI A CONFIG DO SEU FIREBASE
-   Console Firebase → Configurações do projeto → Seus apps → Web
+   BANCO: Supabase (projeto "seguranca-campo"). Antes era Firebase.
+   O site só fala com o banco por funções (rpc): login, listar, gravar, excluir, senhas.
    ============================================================ */
-const firebaseConfig = {
-  apiKey: "AIzaSyAx7nzwRcUbt5OgjQfvPlg9I9FQqJC7D18",
-  authDomain: "seguranca-53af8.firebaseapp.com",
-  projectId: "seguranca-53af8",
-  storageBucket: "seguranca-53af8.firebasestorage.app",
-  messagingSenderId: "513958387414",
-  appId: "1:513958387414:web:74c31973e38fbe3373b377",
-  measurementId: "G-VKEXKBH2WJ"
+const SB_URL = "https://exvvwfwoynehoagzanjw.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4dnZ3ZndveW5laG9hZ3phbmp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwODg5NTQsImV4cCI6MjExMDY2NDk1NH0.NAiSQ9n8s4MWuSrv8YNcp3LiBfH9MDLOS2Gsmms4y7M";
+const CONFIGURADO = true;
+let TOKEN = null, timerAtualiza = null;
+async function rpc(fn, args){
+  const r = await fetch(SB_URL + "/rest/v1/rpc/" + fn, {
+    method: "POST",
+    headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify(args || {})
+  });
+  const t = await r.text(); let d = null;
+  try { d = t ? JSON.parse(t) : null; } catch(e) { d = t; }
+  if(!r.ok){
+    const m = (d && d.message) || t || ("Erro " + r.status);
+    if(/Sessão expirada/.test(m)) sessaoExpirou();
+    throw new Error(m);
+  }
+  return d;
+}
+const guardaSessao = {
+  get(){ try{ return JSON.parse(sessionStorage.getItem("seg_sessao") || "null"); }catch(e){ return null; } },
+  set(v){ try{ v ? sessionStorage.setItem("seg_sessao", JSON.stringify(v)) : sessionStorage.removeItem("seg_sessao"); }catch(e){} }
 };
-const CONFIGURADO = !firebaseConfig.apiKey.includes("COLE_AQUI");
 
 /* ============================================================
    LISTAS TABELADAS (valores reais da operação)
@@ -402,35 +409,11 @@ const PIRAMIDE_OPT = ["AI - Ato Inseguro","SI - Situação Insegura","QA - Quase
 const DESVIO_OPT = ["Documentação","EPI","Isolamento/Sinalização","Máquinas, Equip. e Ferramentas","5S-Organização","Meio Ambiente","Ergonomia Deficiente","Comportamento Inseguro","Condição Insegura"];
 
 /* ============================================================
-   USUÁRIOS E SENHAS (login simples — fase de teste)
-   perfil: "adm" vê tudo e administra senhas; "user" vê painel + registro IPS
-   As senhas começam padrão; a Maria (Adm) pode trocar pela tela de admin.
+   USUÁRIOS E SENHAS: ficam no banco (tabela seg_usuarios, senha criptografada).
+   perfil: "adm" vê tudo e administra senhas; "user" vê painel + registro IPS.
+   A troca de senha pela tela da administradora vale em todos os aparelhos.
    ============================================================ */
-const USUARIOS_PADRAO = [
-  {nome:"Maria Katherine", senha:"admin123", perfil:"adm"},
-  {nome:"Weverton", senha:"123", perfil:"user"},
-  {nome:"Aldo",     senha:"123", perfil:"user"},
-  {nome:"Maykow",   senha:"123", perfil:"user"},
-  {nome:"Bianca",   senha:"123", perfil:"user"},
-  {nome:"Juliana",  senha:"123", perfil:"user"},
-  {nome:"Leone",    senha:"123", perfil:"user"},
-  {nome:"Fábio",    senha:"123", perfil:"user"},
-  {nome:"Alan",     senha:"123", perfil:"user"},
-  {nome:"Jesley",   senha:"123", perfil:"user"},
-  {nome:"Romário",  senha:"123", perfil:"user"},
-  {nome:"Yago",     senha:"123", perfil:"user"},
-  {nome:"Dário",    senha:"123", perfil:"user"},
-  {nome:"Hugo",     senha:"123", perfil:"user"},
-  {nome:"Gedeon",   senha:"123", perfil:"user"},
-  {nome:"Emanuel",  senha:"123", perfil:"user"},
-];
-// carrega senhas salvas (alteradas pela Maria) deste navegador, se houver
-let USUARIOS = USUARIOS_PADRAO.map(u=>({...u}));
-try{
-  const salvo=JSON.parse(window.localStorage.getItem("fmh_usuarios")||"null");
-  if(salvo && Array.isArray(salvo)) USUARIOS=salvo;
-}catch(e){}
-function salvarUsuarios(){ try{window.localStorage.setItem("fmh_usuarios",JSON.stringify(USUARIOS));}catch(e){} }
+let USUARIOS = [];
 
 /* ---------- OS TIPOS ---------- */
 const TIPOS = {
@@ -488,46 +471,59 @@ const DATA_BASE_ACIDENTE = "2025-10-01"; // 01/10/2025
 let app, db, registros=[], tipoSel="IPS", funcs=[], usuario="", perfil="";
 const $=id=>document.getElementById(id);
 
-if(CONFIGURADO){
-  app=initializeApp(firebaseConfig);
-  db=getFirestore(app);
-  ouvirRegistros();
-  $("sideFoot").innerHTML='<span style="color:var(--ok)">●</span> Conectado · nuvem';
-}else{
-  $("setupHost").innerHTML='<div class="setup">⚙️ <b>Falta configurar o Firebase.</b> Abra este arquivo e cole sua config no lugar de <code>COLE_AQUI</code>. Enquanto isso, os registros ficam só na tela (não salvam).</div>';
-  $("sideFoot").innerHTML='<span style="color:var(--warn)">●</span> Modo local · não salva';
-}
+$("sideFoot").innerHTML='<span style="color:var(--ok)">●</span> Conectado · nuvem';
 
 montarTipos(); popularFiltro(); renderHist();
 
 /* ===== LOGIN (com senha e perfil) ===== */
-function preencherLoginSelect(){
-  $("loginSelect").innerHTML='<option value="">— selecione —</option>'+
-    USUARIOS.map(u=>`<option>${u.nome}</option>`).join("");
+async function preencherLoginSelect(){
+  try{
+    USUARIOS = (await rpc("seg_usuarios_lista")) || [];
+    $("loginSelect").innerHTML='<option value="">— selecione —</option>'+
+      USUARIOS.map(n=>`<option>${n}</option>`).join("");
+  }catch(e){
+    $("loginSelect").innerHTML='<option value="">Sem conexão — recarregue a página</option>';
+  }
 }
 preencherLoginSelect();
-function tentarLogin(){
-  const n=$("loginSelect").value;
-  const s=$("loginPass").value;
-  const err=$("loginErr");
-  if(!n){err.style.display="block";err.textContent="Selecione seu nome.";return;}
-  const u=USUARIOS.find(x=>x.nome===n);
-  if(!u || u.senha!==s){err.style.display="block";err.textContent="Senha incorreta.";return;}
-  err.style.display="none";
-  usuario=u.nome; perfil=u.perfil;
-  $("loginPass").value="";
+function entrou(sess){
+  TOKEN=sess.token; usuario=sess.nome; perfil=sess.perfil;
   $("loginModal").classList.add("hidden");
   aplicarPerfil();
   $("sideFoot").innerHTML=`<span style="color:var(--ok)">●</span> ${usuario}${perfil==="adm"?" (Adm)":""} · sair`;
   $("sideFoot").style.cursor="pointer";
   $("sideFoot").onclick=logout;
+  carregarRegistros();
+  clearInterval(timerAtualiza); timerAtualiza=setInterval(carregarRegistros, 30000);  // atualiza sozinho a cada 30 s
   setView("dash");
+}
+async function tentarLogin(){
+  const n=$("loginSelect").value;
+  const s=$("loginPass").value;
+  const err=$("loginErr");
+  if(!n){err.style.display="block";err.textContent="Selecione seu nome.";return;}
+  $("loginBtn").disabled=true;
+  try{
+    const sess=await rpc("seg_login",{p_nome:n,p_senha:s});
+    err.style.display="none"; $("loginPass").value="";
+    guardaSessao.set(sess); entrou(sess);
+  }catch(e){ err.style.display="block"; err.textContent=/Senha/.test(e.message)?"Senha incorreta.":("Não consegui entrar: "+e.message); }
+  $("loginBtn").disabled=false;
+}
+// se recarregar a página, continua logado (até fechar o navegador)
+setTimeout(()=>{ const s=guardaSessao.get(); if(s&&s.token) entrou(s); },0);  // depois de carregar o resto do script
+function sessaoExpirou(){
+  guardaSessao.set(null); TOKEN=null; usuario=""; perfil=""; clearInterval(timerAtualiza);
+  $("loginModal").classList.remove("hidden");
+  const err=$("loginErr"); err.style.display="block"; err.textContent="Sua sessão expirou. Entre de novo.";
 }
 $("loginBtn").onclick=tentarLogin;
 $("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")tentarLogin();});
 
 function logout(){
-  usuario=""; perfil="";
+  if(TOKEN) rpc("seg_sair",{p_token:TOKEN}).catch(()=>{});
+  guardaSessao.set(null); TOKEN=null; usuario=""; perfil=""; clearInterval(timerAtualiza);
+  registros=[]; renderHist();
   $("loginModal").classList.remove("hidden");
 }
 
@@ -653,20 +649,18 @@ async function salvar(){
   const dados={};
   $("formHost").querySelectorAll("[data-k]").forEach(el=>dados[el.dataset.k]=el.value.trim());
   const reg={
-    numero: gerarNumeroFMH(),
     tipo:tipoSel, tipoNome:TIPOS[tipoSel].nome,
     data:$("f_data").value, hora:$("f_hora").value,
     dataHora:`${$("f_data").value}T${$("f_hora").value}`,
     area, funcionarios:[...funcs], dados,
-    respInspecao: usuario,
-    obs:$("f_obs").value.trim(),
-    criadoEm:CONFIGURADO?serverTimestamp():Date.now()
+    obs:$("f_obs").value.trim()
   };
   const btn=$("f_salvar"); btn.disabled=true; btn.textContent="Salvando...";
   try{
-    if(CONFIGURADO){ await addDoc(collection(db,"apontamentos"),reg); }
-    else { registros.unshift({id:"local"+Date.now(),...reg,criadoEm:Date.now()}); renderHist(); }
-    toast(`Registrado ✓  ${reg.numero}`);
+    // o número FMH é gerado pelo banco (nunca repete, mesmo com dois celulares ao mesmo tempo)
+    const numero=await rpc("seg_apontamento_criar",{p_token:TOKEN,p:reg});
+    toast(`Registrado ✓  ${numero}`);
+    await carregarRegistros();
     montarForm();
   }catch(e){ toast("Erro ao salvar: "+e.message,"err"); }
   btn.disabled=false; btn.textContent="✓ Registrar "+TIPOS[tipoSel].nome;
@@ -683,13 +677,14 @@ function gerarNumeroFMH(){
 }
 
 /* ---------- FIRESTORE LIVE ---------- */
-function ouvirRegistros(){
-  const q=query(collection(db,"apontamentos"),orderBy("dataHora","desc"));
-  onSnapshot(q,snap=>{
-    registros=snap.docs.map(d=>({id:d.id,...d.data()}));
-    renderHist(); 
+async function carregarRegistros(){
+  if(!TOKEN) return;
+  try{
+    registros=(await rpc("seg_apontamentos_listar",{p_token:TOKEN}))||[];
+    renderHist();
     if(!$("view-dash").classList.contains("hidden")) renderDash();
-  },err=>{ toast("Erro de leitura: "+err.message,"err"); });
+    const nf=document.querySelector("#formHost .sub b"); if(nf&&!$("view-novo").classList.contains("hidden")) nf.textContent=gerarNumeroFMH();
+  }catch(e){ if(TOKEN) toast("Erro de leitura: "+e.message,"err"); }
 }
 
 /* ---------- HISTÓRICO ---------- */
@@ -732,8 +727,8 @@ function renderHist(){
 }
 async function excluir(id){
   if(!confirm("Excluir este apontamento?"))return;
-  if(CONFIGURADO){ try{await deleteDoc(doc(db,"apontamentos",id));toast("Excluído");}catch(e){toast("Erro: "+e.message,"err");} }
-  else { registros=registros.filter(r=>r.id!==id); renderHist(); toast("Excluído"); }
+  try{ await rpc("seg_apontamento_excluir",{p_token:TOKEN,p_id:Number(id)}); toast("Excluído"); await carregarRegistros(); }
+  catch(e){ toast("Erro: "+e.message,"err"); }
 }
 
 /* ---------- PAINEL ---------- */
@@ -1019,21 +1014,26 @@ function rankHtml(obj,cor){
 }
 
 /* ---- ADMIN: gerenciar senhas ---- */
-function renderAdm(){
-  $("admList").innerHTML=USUARIOS.map((u,i)=>`
+async function renderAdm(){
+  $("admList").innerHTML='<div class="loading"><div class="spin"></div></div>';
+  let lista=[];
+  try{ lista=(await rpc("seg_adm_usuarios",{p_token:TOKEN}))||[]; }
+  catch(e){ $("admList").innerHTML='<div class="empty">'+e.message+'</div>'; return; }
+  // a senha atual não aparece (fica criptografada no banco); digite a nova e clique em Salvar
+  $("admList").innerHTML=lista.map((u,i)=>`
     <div class="adm-row">
       <div class="adm-nome">${u.nome} ${u.perfil==="adm"?'<span class="adm-tag">Adm</span>':''}</div>
-      <input type="text" id="adm_s_${i}" value="${u.senha}" placeholder="nova senha" />
+      <input type="text" id="adm_s_${i}" placeholder="nova senha" autocomplete="off" />
       <button class="adm-save" data-i="${i}">Salvar</button>
     </div>`).join("");
-  $("admList").querySelectorAll(".adm-save").forEach(b=>b.onclick=()=>{
-    const i=+b.dataset.i;
+  $("admList").querySelectorAll(".adm-save").forEach(b=>b.onclick=async()=>{
+    const i=+b.dataset.i, u=lista[i];
     const nova=$("adm_s_"+i).value.trim();
-    if(!nova){toast("Senha não pode ficar vazia","err");return;}
-    USUARIOS[i].senha=nova;
-    salvarUsuarios();
-    preencherLoginSelect();
-    toast(`Senha de ${USUARIOS[i].nome} atualizada ✓`);
+    if(!nova){toast("Digite a nova senha","err");return;}
+    b.disabled=true;
+    try{ await rpc("seg_adm_senha",{p_token:TOKEN,p_nome:u.nome,p_senha:nova}); $("adm_s_"+i).value=""; toast(`Senha de ${u.nome} atualizada ✓`); }
+    catch(e){ toast("Erro: "+e.message,"err"); }
+    b.disabled=false;
   });
 }
 
