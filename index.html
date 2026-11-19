@@ -338,6 +338,7 @@
   table.mx tbody tr:hover td.v{background:#fecaca}table.mx tbody tr:hover td.a{background:#fed7aa}
   .mx-tag.fora{background:#fee2e2;color:#b91c1c}.mx-tag.exp{background:#dbeafe;color:#1d4ed8}.mx-tag.par{background:#fef3c7;color:#92400e}
   .mx-bar .bt{background:var(--hi);color:#fff}
+  #mxBusca{min-width:220px;flex:1.4}#mxSt,#mxTre{flex:1}
   .mx-modal{background:rgba(15,23,42,.5)}
   .mx-modal .box{background:#fff;border:none;border-top:5px solid var(--hi);box-shadow:0 24px 60px rgba(15,23,42,.3)}
   .mx-modal .ok{background:var(--hi);color:#fff}
@@ -499,6 +500,15 @@
           <option value="fora">Só fora do efetivo</option>
         </select>
         <select id="mxFunc"><option value="">Todas as funções</option></select>
+        <select id="mxTre"><option value="">Todos os treinamentos</option></select>
+        <select id="mxSt">
+          <option value="">Qualquer situação</option>
+          <option value="v">🔴 Vencido</option>
+          <option value="a">🟠 Vence em até 30 dias</option>
+          <option value="va">🔴🟠 Vencido ou vencendo</option>
+          <option value="k">🟢 Em dia</option>
+          <option value="z">⚪ Sem registro</option>
+        </select>
         <button class="bt somente-adm" id="mxNovo">＋ Funcionário</button>
       </div>
       <div class="mx-wrap"><div id="mxHost"><div class="loading"><div class="spin"></div></div></div></div>
@@ -833,7 +843,7 @@ function gerarNumeroFMH(){
 /* ============================================================
    FUNCIONÁRIOS + MATRIZ DE TREINAMENTO (tabela seg_funcionarios)
    ============================================================ */
-let FUNCS=[], mxFiltroKpi="";
+let FUNCS=[];
 // colunas da matriz: tipo "feito" = data em que fez (sem validade); "val" = válido até
 const MX_COLS=[
   {k:"integracao",l:"Integração",t:"feito",g:"Integração"},
@@ -883,19 +893,39 @@ function mxLista(){
     .filter(f=>!q||(f.nome+" "+(f.funcao||"")).toLowerCase().includes(q));
 }
 function contaEstados(f){ let v=0,a=0; MX_COLS.forEach(c=>{const e=estado(c,f.dados[c.k]); if(e==="v")v++; if(e==="a")a++;}); return {v,a}; }
+// colunas consideradas pelo filtro de situação: o treinamento escolhido, ou todas as validades
+function mxColsAlvo(){ const t=$("mxTre").value; return t?MX_COLS.filter(c=>c.k===t):MX_COLS.filter(c=>c.t==="val"); }
+function mxSituacao(f,cols,st){
+  const es=cols.map(c=>estado(c,(f.dados||{})[c.k]));
+  if(st==="v") return es.includes("v");
+  if(st==="a") return es.includes("a");
+  if(st==="va") return es.includes("v")||es.includes("a");
+  if(st==="k") return es.includes("k")&&!es.includes("v")&&!es.includes("a");
+  if(st==="z") return cols.length===1?es[0]==="z":!MX_COLS.some(c=>(f.dados||{})[c.k]);
+  return true;
+}
 
 function renderMatriz(){
   if(!FUNCS.length){ carregarFuncionarios(); }
   const fs=$("mxFunc"), atual=fs.value;
   const funcoes=[...new Set(FUNCS.filter(f=>f.ativo).map(f=>f.funcao).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
   fs.innerHTML='<option value="">Todas as funções</option>'+funcoes.map(x=>`<option ${x===atual?"selected":""}>${esc2(x)}</option>`).join("");
+  const ts=$("mxTre"); if(ts.options.length<2) ts.innerHTML='<option value="">Todos os treinamentos</option>'+MX_COLS.filter(c=>c.t==="val").map(c=>`<option value="${c.k}">${esc2(c.l)}</option>`).join("");
+  const tre=$("mxTre").value, colT=MX_COLS.find(c=>c.k===tre), cols=mxColsAlvo(), st=$("mxSt").value;
   let L=mxLista();
-  const comV=L.filter(f=>contaEstados(f).v>0), comA=L.filter(f=>contaEstados(f).a>0), semM=L.filter(f=>!MX_COLS.some(c=>f.dados[c.k]));
-  const kp=(id,c,n,l)=>`<div class="mx-kpi ${mxFiltroKpi===id?"on":""}" style="--c:${c}" data-k="${id}"><div class="n">${n}</div><div class="l">${l}</div></div>`;
-  $("mxKpis").innerHTML=kp("","var(--blue)",L.length,"Pessoas")+kp("v","var(--danger)",comV.length,"Com treinamento vencido")+
-    kp("a","var(--warn)",comA.length,"Vence em até "+MX_AVISO+" dias")+kp("s","#5b6b78",semM.length,"Sem nada na matriz");
-  $("mxKpis").querySelectorAll(".mx-kpi").forEach(d=>d.onclick=()=>{ mxFiltroKpi=mxFiltroKpi===d.dataset.k?"":d.dataset.k; renderMatriz(); });
-  if(mxFiltroKpi==="v") L=comV; else if(mxFiltroKpi==="a") L=comA; else if(mxFiltroKpi==="s") L=semM;
+  const n=x=>L.filter(f=>mxSituacao(f,cols,x)).length;
+  const sobre=colT?" · "+colT.l:"";
+  const kp=(id,c,num,l)=>`<div class="mx-kpi ${st===id?"on":""}" style="--c:${c}" data-k="${id}"><div class="n">${num}</div><div class="l">${l}</div></div>`;
+  $("mxKpis").innerHTML=kp("","var(--blue)",L.length,"Pessoas")+kp("v","var(--danger)",n("v"),"Vencido"+sobre)+
+    kp("a","var(--warn)",n("a"),"Vence em até "+MX_AVISO+" dias"+sobre)+kp("k","var(--ok)",n("k"),(colT?"Em dia":"Tudo em dia")+sobre)+
+    kp("z","#94a3b8",n("z"),(colT?"Sem registro":"Sem nada na matriz")+sobre);
+  $("mxKpis").querySelectorAll(".mx-kpi").forEach(d=>d.onclick=()=>{ $("mxSt").value=st===d.dataset.k?"":d.dataset.k; renderMatriz(); });
+  if(st) L=L.filter(f=>mxSituacao(f,cols,st));
+  // com um treinamento escolhido: mostra só a coluna dele, com os dias, do mais atrasado para o mais folgado
+  if(colT){
+    L=[...L].sort((a,b)=>{ const da=diasAte((a.dados||{})[tre]), db=diasAte((b.dados||{})[tre]); return (da??1e9)-(db??1e9)||a.nome.localeCompare(b.nome,"pt-BR"); });
+    return mxTabelaFoco(L,colT);
+  }
   const ehAdm=perfil==="adm";
   $("mxDica").textContent=ehAdm?"Clique numa data para alterar, ou no nome para editar o funcionário.":"";
   if(!L.length){ $("mxHost").innerHTML='<div class="empty">Nenhum funcionário com esses filtros.</div>'; return; }
@@ -919,8 +949,22 @@ function renderMatriz(){
     td.dataset.acao==="pessoa"?mxEditarPessoa(f):mxEditarData(f,MX_COLS.find(c=>c.k===td.dataset.k));
   });
 }
-["mxBusca","mxSit","mxFunc"].forEach(id=>{ const el=$(id); el.addEventListener(id==="mxBusca"?"input":"change",()=>renderMatriz()); });
+["mxBusca","mxSit","mxFunc","mxTre","mxSt"].forEach(id=>{ const el=$(id); el.addEventListener(id==="mxBusca"?"input":"change",()=>renderMatriz()); });
 $("mxNovo").onclick=()=>mxEditarPessoa(null);
+
+function mxTabelaFoco(L,c){
+  const ehAdm=perfil==="adm";
+  $("mxDica").textContent=ehAdm?"Clique na data para alterar.":"";
+  if(!L.length){ $("mxHost").innerHTML='<div class="empty">Ninguém com esses filtros.</div>'; return; }
+  let h=`<table class="mx"><thead><tr><th class="nm">Funcionário</th><th>Líder</th><th style="max-width:none">${esc2(c.l)}<br>válido até</th><th style="max-width:none">Situação</th></tr></thead><tbody>`;
+  h+=L.map(f=>{ const d=f.dados||{}, v=d[c.k], e=estado(c,v), n=diasAte(v);
+    const sit=!v?"Sem registro":n<0?`Vencido há ${-n} ${-n===1?"dia":"dias"}`:n===0?"Vence hoje":`Faltam ${n} ${n===1?"dia":"dias"}`;
+    const tags=(!f.efetivo?'<span class="mx-tag fora">fora do efetivo</span>':'')+(d.situacao==="experiência"?'<span class="mx-tag exp">experiência</span>':'')+(d.situacao==="parada"?'<span class="mx-tag par">parada</span>':'');
+    return `<tr><td class="nm"><b>${esc2(f.nome)}${tags}</b><small>${esc2(f.funcao||"—")}</small></td><td>${esc2(d.lider||"")}</td>`+
+      `<td class="c ${e} ${ehAdm?"ed":""}" data-id="${f.id}" data-k="${c.k}">${v?fmtD(v):"·"}</td><td class="c ${e}" style="min-width:150px">${sit}</td></tr>`; }).join("")+'</tbody></table>';
+  $("mxHost").innerHTML=h;
+  if(ehAdm) $("mxHost").querySelectorAll("td.ed").forEach(td=>td.onclick=()=>{ const f=FUNCS.find(x=>x.id===+td.dataset.id); if(f) mxEditarData(f,c); });
+}
 
 function mxModal(html){ const m=document.createElement("div"); m.className="mx-modal"; m.innerHTML='<div class="box">'+html+'</div>';
   m.onclick=e=>{ if(e.target===m) m.remove(); }; document.body.appendChild(m); return m; }
