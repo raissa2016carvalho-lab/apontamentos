@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<meta name="theme-color" content="#0c1116" />
+<meta name="theme-color" content="#111827" />
+<link rel="icon" href="logo-fmh.png">
 <title>Apontamento de Segurança em Campo</title>
 <style>
   :root{
@@ -254,6 +255,95 @@
   .setup{background:rgba(255,138,61,.1);border:1px solid rgba(255,138,61,.4);
     border-radius:12px;padding:16px;font-size:13px;color:#ffd2ad;line-height:1.6;margin:0 0 16px}
   .setup code{background:#000;padding:2px 6px;border-radius:5px;color:var(--hi);font-size:12px}
+
+  /* ================================================================
+     VISUAL FMH (19/11/2026) — padrão claro dos painéis, com a marca FMH:
+     laranja #F28003 (do logo), preto/grafite e branco. Sobrepõe o tema escuro acima.
+     ================================================================ */
+  :root{
+    --bg:#f1f5f9; --panel:#ffffff; --panel-2:#f8fafc; --line:#e2e8f0;
+    --ink:#0f172a; --ink-dim:#64748b;
+    --hi:#f28003; --hi-ink:#ffffff; --hi-escuro:#c96a00; --hi-claro:#fff4e6;
+    --ok:#16a34a; --warn:#d97706; --danger:#dc2626; --blue:#2563eb;
+    --side:#111827; --side-2:#1f2937; --side-ink:#e5e7eb; --side-dim:#9ca3af;
+    --sombra:0 1px 2px rgba(15,23,42,.06),0 1px 3px rgba(15,23,42,.04);
+    --radius:12px; --font:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+  }
+  body{background:var(--bg);color:var(--ink)}
+  /* login */
+  .login-modal{background:radial-gradient(circle at 25% 15%,#3a2a17 0,#111827 60%);backdrop-filter:none}
+  .login-card{background:#fff;border:none;border-top:5px solid var(--hi);box-shadow:0 24px 60px rgba(0,0,0,.35);padding:30px 28px}
+  .login-logo{display:block;width:190px;max-width:80%;margin:0 auto 18px}
+  .login-card h2{color:var(--ink)}
+  /* menu lateral escuro, como os painéis B&Q */
+  .sidebar{background:var(--side);border-right:none;box-shadow:2px 0 12px rgba(15,23,42,.08)}
+  .brand{background:var(--side);border-bottom:1px solid #263041;flex-direction:column;align-items:stretch;gap:10px;padding:16px}
+  .brand-logo{background:#fff;border-radius:10px;padding:8px 12px;display:flex;justify-content:center}
+  .brand-logo img{height:44px;width:auto;display:block}
+  .brand-txt{text-align:center}
+  .brand-txt b{color:#fff;font-size:14px}
+  .brand-txt span{color:var(--side-dim)}
+  .nav-group{color:var(--side-dim);opacity:1}
+  .nav-item{color:#cbd5e1}
+  .nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+  .nav-item.active{background:rgba(242,128,3,.16);color:#fff;border-left-color:var(--hi)}
+  .side-foot{border-top:1px solid #263041;color:var(--side-dim)}
+  .menu-toggle{background:var(--side);color:#fff;box-shadow:0 4px 14px rgba(15,23,42,.25)}
+  .backdrop{background:rgba(15,23,42,.45)}
+  /* conteúdo */
+  .content{max-width:1240px}
+  .page-title{color:var(--ink);font-weight:800;letter-spacing:-.2px;padding-bottom:12px;border-bottom:3px solid var(--hi);display:inline-flex}
+  label{color:#475569;letter-spacing:.3px}
+  input,select,textarea{background-color:#fff;border:1px solid #cbd5e1;color:var(--ink);border-radius:10px}
+  input:focus,select:focus,textarea:focus{border-color:var(--hi);box-shadow:0 0 0 3px rgba(242,128,3,.15)}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M3 5l5 6 5-6z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+  .btn{background:var(--hi);color:#fff;border-radius:10px;text-transform:none;font-size:15px;box-shadow:0 2px 6px rgba(242,128,3,.3)}
+  .btn:hover{background:var(--hi-escuro)}
+  .btn-clear{background:#fff;color:#475569;border:1px solid #cbd5e1}
+  .btn-clear:hover{color:var(--hi-escuro);border-color:var(--hi)}
+  .card,.bars,.stat,.rec,.mx-kpi{box-shadow:var(--sombra)}
+  .card{border-top:4px solid var(--c,var(--hi))}
+  .card .badge{color:#fff}
+  .stat .n{color:var(--ink)}
+  .rec .tg{color:#fff}
+  .rec .fmh{color:var(--hi-escuro);background:var(--hi-claro);border-color:#fbd5a8}
+  .chip{background:var(--hi-claro);border-color:#fbd5a8;color:#7c3d00}
+  .add-row button{background:var(--hi);color:#fff;border:none}
+  .adm-tag,.adm-save{background:var(--hi);color:#fff}
+  /* gráficos */
+  .bar-track{background:#eef2f6;display:block}
+  .bar-fill{display:block}  /* era <span> sem display: a barra não aparecia */
+  .grid-2>*{min-width:0}  /* no celular os gráficos passavam da largura da tela */
+  @media(max-width:820px){.bar-row .nm{width:96px}.mx-kpis{grid-template-columns:1fr 1fr}}
+  .mcol .mbar{background:linear-gradient(180deg,#f7a64a,var(--hi))}
+  .mcol .mbar .mval{background:#fff;color:var(--ink);border-color:var(--line)}
+  .pir-row{box-shadow:0 1px 3px rgba(15,23,42,.15)}
+  .placar{background:linear-gradient(135deg,#ecfdf3,#dcfce7);border:1px solid #bbf7d0;border-left:6px solid var(--ok);box-shadow:var(--sombra)}
+  .placar .big{color:#15803d;text-shadow:none}
+  .placar .info .t{color:#166534}
+  .placar.zerado{background:linear-gradient(135deg,#fef2f2,#fee2e2);border-color:#fecaca;border-left-color:var(--danger)}
+  .placar.zerado .big{color:#b91c1c;text-shadow:none}.placar.zerado .info .t{color:#991b1b}
+  .toast{background:var(--ok);color:#fff;box-shadow:0 10px 30px rgba(15,23,42,.2);opacity:0;pointer-events:none}
+  .toast.show{opacity:1}
+  /* matriz */
+  .mx-wrap{box-shadow:var(--sombra)}
+  table.mx thead th{background:#f8fafc;color:#475569}
+  table.mx thead th.nm{background:#f8fafc}
+  table.mx th.grp{background:var(--hi-claro);color:var(--hi-escuro)}
+  table.mx td.v{background:#fee2e2;color:#b91c1c}
+  table.mx td.a{background:#ffedd5;color:#c2410c}
+  table.mx td.k{color:#15803d}
+  table.mx td.z{color:#cbd5e1}
+  table.mx tbody tr:hover td{background-color:#f8fafc}
+  table.mx tbody tr:hover td.v{background:#fecaca}table.mx tbody tr:hover td.a{background:#fed7aa}
+  .mx-tag.fora{background:#fee2e2;color:#b91c1c}.mx-tag.exp{background:#dbeafe;color:#1d4ed8}.mx-tag.par{background:#fef3c7;color:#92400e}
+  .mx-bar .bt{background:var(--hi);color:#fff}
+  .mx-modal{background:rgba(15,23,42,.5)}
+  .mx-modal .box{background:#fff;border:none;border-top:5px solid var(--hi);box-shadow:0 24px 60px rgba(15,23,42,.3)}
+  .mx-modal .ok{background:var(--hi);color:#fff}
+  .mx-modal .no{background:#fff;color:#334155}
+  .mx-leg i[style*="2f6e4f"]{background:#bbf7d0!important}.mx-leg i[style*="2a3540"]{background:#e2e8f0!important}
+  .mx-leg i[style*="255,77,77"]{background:#fecaca!important}.mx-leg i[style*="255,138,61"]{background:#fed7aa!important}
 </style>
 </head>
 <body>
@@ -261,7 +351,7 @@
 <!-- modal: login -->
 <div id="loginModal" class="login-modal">
   <div class="login-card">
-    <div class="logo" style="margin:0 auto 14px;width:54px;height:54px;font-size:28px">⚠️</div>
+    <img src="logo-fmh.png" alt="Grupo FMH Industrial" class="login-logo">
     <h2>Entrar no sistema</h2>
     <p>Selecione seu nome e digite a senha</p>
     <select id="loginSelect"><option value="">— selecione —</option></select>
@@ -278,8 +368,8 @@
   <!-- ===== SIDEBAR ===== -->
   <aside class="sidebar" id="sidebar">
     <div class="brand">
-      <div class="logo">⚠️</div>
-      <div class="brand-txt"><b>Segurança em Campo</b><span>Apontamentos · FMH</span></div>
+      <div class="brand-logo"><img src="logo-fmh.png" alt="Grupo FMH Industrial"></div>
+      <div class="brand-txt"><b>Segurança em Campo</b><span>Apontamentos · SESMT</span></div>
     </div>
 
     <nav class="nav">
@@ -345,7 +435,7 @@
       <div class="grid-2">
         <div class="bars">
           <h4>Pirâmide de Segurança</h4>
-          <div class="pir-head"><span style="color:#2e7d32">Acumulado</span><span style="color:#e0a800">Semanal</span></div>
+          <div class="pir-head"><span style="color:#2e7d32">Acumulado</span><span style="color:#c96a00">Semanal</span></div>
           <div id="pirHost"></div>
         </div>
         <div class="bars">
@@ -1096,7 +1186,7 @@ function renderDonut(regs){
   const svg=$("donutSvg");
   const cx=100,cy=100,r=70,sw=34; // raio e espessura
   if(total===0){
-    svg.innerHTML=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#2a3540" stroke-width="${sw}"/>
+    svg.innerHTML=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="${sw}"/>
       <text x="${cx}" y="${cy+5}" text-anchor="middle" class="donut-center">Sem desvios</text>`;
   } else {
     let ang=-90; // começa no topo
