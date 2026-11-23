@@ -29,3 +29,14 @@
 --     nr10_sep, nr18_plataforma, nr34_quente, nr05_cipa, fit_teste, cnh (+ cnh_tipo, fardamento, bota, cinto_tag).
 --     Dados pessoais da planilha (CPF, RG, CTPS, PIS, telefones, endereço, mãe, nascimento, nº da CNH) NÃO foram carregados.
 --   Funções: seg_funcionarios_listar(token); seg_funcionario_salvar(token, json) e seg_matriz_definir(token, id, campo, valor) — só administradora.
+
+-- 23/11/2026
+--   Apontamentos devolvidos: os 257 da cópia seg_apontamentos_backup_20261119 voltaram com o mesmo id e número (FMH-0001 a FMH-0263).
+--     O próximo registro sai FMH-0264.
+--   Usuários e permissões (tela "Usuários e permissões", substitui "Gerenciar senhas"):
+--     seg_usuarios ganhou permissoes text[] (padrão {painel,ips,matriz}) e ultimo_login.
+--     Permissões: painel, ips, epi, historico, excluir, matriz, matriz_editar, usuarios. Perfil 'adm' = todas.
+--     As funções conferem a permissão no banco (seg_exige): criar IPS/EPI, excluir, editar matriz/funcionário, gerenciar usuários.
+--     Novas: seg_eu(token) → {nome, perfil, permissoes}; seg_adm_usuario_salvar(token, json) inclui ou altera login
+--       (nome, senha, perfil, permissões, ativo). Ninguém tira o próprio acesso; só adm cria/altera adm; nome não repete.
+--     Desativar um login derruba as sessões dele. Renomear não altera os apontamentos já gravados (ficam com o nome antigo).
