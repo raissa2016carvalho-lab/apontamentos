@@ -524,6 +524,20 @@
       <div class="mx-leg"><span><i style="background:rgba(255,77,77,.5)"></i>Vencido</span><span><i style="background:rgba(255,138,61,.5)"></i>Vence em até 30 dias</span><span><i style="background:#2f6e4f"></i>Em dia</span><span><i style="background:#2a3540"></i>Sem registro</span><span id="mxDica"></span></div>
     </section>
 
+    <!-- CADASTRO DE EPIs -->
+    <section id="view-epis" class="hidden">
+      <h2 class="page-title">🧤 Cadastro de EPIs</h2>
+      <div class="card" style="--c:var(--hi)">
+        <div class="us-topo"><p class="sub" style="margin:0;flex:1;min-width:220px">Os EPIs ativos aparecem na lista do formulário de <b>Saída de EPI</b>. Desativar tira da lista, mas os registros antigos continuam.</p>
+          <button class="adm-save" id="epNovo">＋ Novo EPI</button></div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 4px">
+          <input id="epBusca" placeholder="🔍 Buscar EPI" style="margin:0;max-width:280px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-dim);cursor:pointer"><input type="checkbox" id="epInativos" style="width:auto;margin:0"> Mostrar desativados</label>
+        </div>
+        <div id="epList"></div>
+      </div>
+    </section>
+
     <!-- ADMIN: usuários e permissões -->
     <section id="view-adm" class="hidden">
       <h2 class="page-title">👥 Usuários e permissões</h2>
@@ -575,6 +589,7 @@ const AREAS = ["Pátio matéria prima","Alto forno","CTE","Granulação 01","Lin
 const RESPONSAVEIS = ["Leone","Fábio","Jesley","Alan"];
 const CONTRATOS = ["FMH Manutenção","FMH Engenharia"];
 const EQUIPE = ["Weverton","Aldo","Maykow","Bianca","Juliana","Leone","Fábio","Alan","Jesley","Romário","Yago","Dário","Hugo","Gedeon","Emanuel"];
+// lista inicial; depois do login vem do banco (tela "Cadastro de EPIs")
 const EPIS = ["Óculos escuro","Óculos incolor","Óculos ampla visão","Máscara de solda","Protetor auricular plug","Protetor auricular concha","Respirador PFF2","Respirador semifacial","Filtro químico","Filtro mecânico","Capacete","Mangote de raspa","Avental de raspa","Blusão de raspa","Luva de vaqueta cano longo","Luva de vaqueta cano curto","Fardamento camiseta azul","Fardamento calça azul","Fardamento camiseta cinza","Fardamento calça cinza","Protetor facial","Suporte protetor facial","Luva multitato"];
 const PIRAMIDE_OPT = ["AI - Ato Inseguro","SI - Situação Insegura","QA - Quase Acidente","PS - Primeiros Socorros","SPT - Com Tratamento Médico","SPTR - Com Restrição","CPT - Com Perda de Tempo","Fatalidade"];
 const DESVIO_OPT = ["Documentação","EPI","Isolamento/Sinalização","Máquinas, Equip. e Ferramentas","5S-Organização","Meio Ambiente","Ergonomia Deficiente","Comportamento Inseguro","Condição Insegura"];
@@ -649,6 +664,7 @@ const PERMISSOES=[
   {k:"excluir",l:"Excluir apontamentos"},
   {k:"matriz",l:"Ver a matriz de treinamento"},
   {k:"matriz_editar",l:"Editar matriz e funcionários"},
+  {k:"epis_cadastro",l:"Cadastrar EPIs"},
   {k:"usuarios",l:"Gerenciar usuários, senhas e permissões"},
 ];
 const PERM_PADRAO=["painel","ips","matriz"];
@@ -678,7 +694,7 @@ function entrou(sess){
   $("sideFoot").innerHTML=`<span style="color:var(--ok)">●</span> ${usuario}${perfil==="adm"?" (Adm)":""} · sair`;
   $("sideFoot").style.cursor="pointer";
   $("sideFoot").onclick=logout;
-  carregarRegistros(); carregarFuncionarios();
+  carregarRegistros(); carregarFuncionarios(); carregarEpis();
   clearInterval(timerAtualiza); timerAtualiza=setInterval(carregarRegistros, 30000);  // atualiza sozinho a cada 30 s
   setView(primeiraTela());
 }
@@ -741,6 +757,15 @@ function aplicarPerfil(){
     document.querySelector('.nav-item[data-view="matriz"]').after(admItem);
   }
   if(admItem) admItem.style.display = pode("usuarios") ? "" : "none";
+  let epiCad=document.getElementById("navEpis");
+  if(pode("epis_cadastro") && !epiCad){
+    epiCad=document.createElement("button");
+    epiCad.id="navEpis"; epiCad.className="nav-item"; epiCad.dataset.view="epis";
+    epiCad.innerHTML='<span class="ni">🧤</span> Cadastro de EPIs';
+    epiCad.onclick=()=>setView("epis");
+    document.querySelector('.nav-item[data-view="matriz"]').after(epiCad);
+  }
+  if(epiCad) epiCad.style.display = pode("epis_cadastro") ? "" : "none";
   // grupos do menu sem nenhum item visível somem
   document.querySelectorAll(".nav-group").forEach(g=>{
     let el=g.nextElementSibling, algum=false;
@@ -756,10 +781,10 @@ function aplicarPerfil(){
 /* ===== NAVEGAÇÃO SIDEBAR ===== */
 function setView(view, tipo){
   // proteção: só abre o que a permissão do login deixa
-  const precisa=view==="novo"?(tipo==="SAIDA_EPI"?"epi":"ips"):{dash:"painel",hist:"historico",matriz:"matriz",adm:"usuarios"}[view];
+  const precisa=view==="novo"?(tipo==="SAIDA_EPI"?"epi":"ips"):{dash:"painel",hist:"historico",matriz:"matriz",adm:"usuarios",epis:"epis_cadastro"}[view];
   if(precisa && !pode(precisa)){ toast("Você não tem permissão para esta tela","err"); return; }
   // esconde todas as seções
-  ["novo","hist","dash","adm","matriz"].forEach(v=>$("view-"+v).classList.add("hidden"));
+  ["novo","hist","dash","adm","matriz","epis"].forEach(v=>$("view-"+v).classList.add("hidden"));
   document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
   if(view==="novo"){
     tipoSel=tipo;
@@ -774,6 +799,7 @@ function setView(view, tipo){
     if(view==="dash") renderDash();
     if(view==="adm") renderAdm();
     if(view==="matriz") renderMatriz();
+    if(view==="epis") renderEpis();
   }
   fecharMenu();
   window.scrollTo(0,0);
@@ -838,6 +864,9 @@ function montarForm(){
   $("f_addFunc").onclick=addFunc;
   $("f_func").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addFunc();}});
   $("f_salvar").onclick=salvar;
+  // Saída de EPI: ao escolher o EPI, preenche o CA cadastrado (se tiver)
+  const selEpi=document.querySelector('#formHost [data-k="epi"]'), inCa=document.querySelector('#formHost [data-k="ca"]');
+  if(selEpi&&inCa){ const poeCa=()=>{ const e=EPIS_DB.find(x=>x.nome===selEpi.value); if(e&&e.ca) inCa.value=e.ca; }; selEpi.onchange=poeCa; poeCa(); }
 }
 function addFunc(){
   const v=$("f_func").value.trim(); if(!v)return;
@@ -1388,6 +1417,48 @@ function rankHtml(obj,cor){
     <div class="bar-row"><span class="nm">${nome}</span>
       <span class="bar-track"><span class="bar-fill" style="--c:${cor};width:${n/max*100}%"></span></span>
       <span class="vl">${n}</span></div>`).join("");
+}
+
+/* ---- CADASTRO DE EPIs ---- */
+let EPIS_DB=[];
+async function carregarEpis(){
+  if(!TOKEN) return;
+  try{
+    EPIS_DB=(await rpc("seg_epis_listar",{p_token:TOKEN}))||[];
+    const ativos=EPIS_DB.filter(e=>e.ativo).map(e=>e.nome);
+    if(ativos.length){ EPIS.length=0; EPIS.push(...ativos); }   // o formulário usa esta lista
+  }catch(e){ /* sem conexão: fica a lista padrão */ }
+}
+async function renderEpis(){
+  $("epList").innerHTML='<div class="loading"><div class="spin"></div></div>';
+  await carregarEpis();
+  const q=$("epBusca").value.trim().toLowerCase(), inat=$("epInativos").checked;
+  const L=EPIS_DB.filter(e=>(inat||e.ativo)&&(!q||e.nome.toLowerCase().includes(q)));
+  $("epList").innerHTML=L.map(e=>`<div class="adm-row ${e.ativo?"":"inativo"}">
+      <div class="adm-nome">${esc2(e.nome)}${e.ativo?"":' <span class="adm-tag" style="background:#64748b;color:#fff">desativado</span>'}</div>
+      <div class="us-ult">${e.ca?"CA "+esc2(e.ca):""}</div>
+      <button class="us-ed" data-id="${e.id}">Editar</button></div>`).join("")||'<div class="empty">Nenhum EPI.</div>';
+  $("epList").querySelectorAll(".us-ed").forEach(b=>b.onclick=()=>epEditar(EPIS_DB.find(e=>e.id===+b.dataset.id)));
+}
+$("epNovo").onclick=()=>epEditar(null);
+$("epInativos").onchange=renderEpis;
+$("epBusca").oninput=()=>{ clearTimeout(window._epT); window._epT=setTimeout(renderEpis,250); };
+function epEditar(e){
+  const m=mxModal(`<h3>${e?"Editar EPI":"Novo EPI"}</h3><p class="sub">${e?esc2(e.nome):"Passa a aparecer na Saída de EPI"}</p>
+    <label>Nome do EPI</label><input id="epNome" value="${esc2(e?e.nome:"")}" placeholder="Ex: Luva nitrílica">
+    <label>CA (opcional)</label><input id="epCa" value="${esc2(e&&e.ca||"")}" placeholder="Nº do CA">
+    ${e?`<label class="ck"><input type="checkbox" id="epAtivo" ${e.ativo?"checked":""}> Ativo (aparece no formulário)</label>`:""}
+    <div class="acts"><button class="no" id="epCanc">Cancelar</button><button class="ok" id="epOk">Salvar</button></div>`);
+  m.querySelector("#epCanc").onclick=()=>m.remove();
+  m.querySelector("#epOk").onclick=async()=>{
+    const p={nome:m.querySelector("#epNome").value.trim(), ca:m.querySelector("#epCa").value.trim(), ativo:e?m.querySelector("#epAtivo").checked:true};
+    if(!p.nome){ toast("Informe o nome do EPI","err"); return; }
+    if(e) p.id=e.id;
+    const b=m.querySelector("#epOk"); b.disabled=true;
+    try{ await rpc("seg_epi_salvar",{p_token:TOKEN,p}); m.remove(); toast(e?"EPI atualizado ✓":"EPI cadastrado ✓"); renderEpis(); }
+    catch(err){ toast("Erro: "+err.message,"err"); b.disabled=false; }
+  };
+  m.querySelector("#epNome").focus();
 }
 
 /* ---- ADMIN: usuários e permissões ---- */
