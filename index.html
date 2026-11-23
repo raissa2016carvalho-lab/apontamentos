@@ -979,7 +979,7 @@ function renderMatriz(){
     MX_COLS.map(c=>`<th title="${esc2(c.l)}">${esc2(c.l)}</th>`).join("")+'</tr></thead><tbody>';
   h+=L.map(f=>{
     const d=f.dados||{}, sit=d.situacao;
-    const tags=(!f.efetivo?'<span class="mx-tag fora">fora do efetivo</span>':'')+(sit==="experiência"?'<span class="mx-tag exp">experiência</span>':'')+(sit==="parada"?'<span class="mx-tag par">parada</span>':'');
+    const tags=(!f.efetivo?'<span class="mx-tag fora">fora do efetivo</span>':'')+(sit==="experiência"?'<span class="mx-tag exp">experiência</span>':'');
     return `<tr><td class="nm ${ehAdm?"c ed":""}" data-id="${f.id}" data-acao="pessoa"><b>${esc2(f.nome)}${tags}</b><small>${esc2(f.funcao||"—")}${d.mat_amp?" · Mat. AMP "+esc2(d.mat_amp):""}${d.cnh_tipo?" · CNH "+esc2(d.cnh_tipo.toUpperCase()):""}</small></td>`+
       `<td>${esc2(d.lider||"")}</td><td>${fmtD(d.admissao)}</td>`+
       MX_COLS.map(c=>{ const v=d[c.k], e=estado(c,v), n=diasAte(v);
@@ -1003,7 +1003,7 @@ function mxTabelaFoco(L,c){
   let h=`<table class="mx"><thead><tr><th class="nm">Funcionário</th><th>Líder</th><th style="max-width:none">${esc2(c.l)}<br>válido até</th><th style="max-width:none">Situação</th></tr></thead><tbody>`;
   h+=L.map(f=>{ const d=f.dados||{}, v=d[c.k], e=estado(c,v), n=diasAte(v);
     const sit=!v?"Sem registro":n<0?`Vencido há ${-n} ${-n===1?"dia":"dias"}`:n===0?"Vence hoje":`Faltam ${n} ${n===1?"dia":"dias"}`;
-    const tags=(!f.efetivo?'<span class="mx-tag fora">fora do efetivo</span>':'')+(d.situacao==="experiência"?'<span class="mx-tag exp">experiência</span>':'')+(d.situacao==="parada"?'<span class="mx-tag par">parada</span>':'');
+    const tags=(!f.efetivo?'<span class="mx-tag fora">fora do efetivo</span>':'')+(d.situacao==="experiência"?'<span class="mx-tag exp">experiência</span>':'');
     return `<tr><td class="nm"><b>${esc2(f.nome)}${tags}</b><small>${esc2(f.funcao||"—")}</small></td><td>${esc2(d.lider||"")}</td>`+
       `<td class="c ${e} ${ehAdm?"ed":""}" data-id="${f.id}" data-k="${c.k}">${v?fmtD(v):"·"}</td><td class="c ${e}" style="min-width:150px">${sit}</td></tr>`; }).join("")+'</tbody></table>';
   $("mxHost").innerHTML=h;
