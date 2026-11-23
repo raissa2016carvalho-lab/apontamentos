@@ -40,3 +40,8 @@
 --     Novas: seg_eu(token) → {nome, perfil, permissoes}; seg_adm_usuario_salvar(token, json) inclui ou altera login
 --       (nome, senha, perfil, permissões, ativo). Ninguém tira o próprio acesso; só adm cria/altera adm; nome não repete.
 --     Desativar um login derruba as sessões dele. Renomear não altera os apontamentos já gravados (ficam com o nome antigo).
+
+-- 23/11/2026 (2ª parte) — Cadastro de EPIs
+--   seg_epis (nome único, ca opcional, ativo). Carga inicial: os 23 EPIs que eram fixos no código.
+--   seg_epis_listar(token); seg_epi_salvar(token, json {id?, nome, ca, ativo}) — exige a permissão nova "epis_cadastro".
+--   O formulário de Saída de EPI lista só os ativos e preenche o CA cadastrado ao escolher o EPI.
