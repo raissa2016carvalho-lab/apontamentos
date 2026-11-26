@@ -139,6 +139,16 @@
     color:var(--hi);border-radius:11px;font-size:24px;cursor:pointer;font-weight:700}
 
   .filters{display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap}
+  .btn-xls{background:#107c41;color:#fff;border:none;border-radius:10px;padding:9px 14px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
+  .btn-xls:hover{filter:brightness(1.08)}
+  .tab-wrap{overflow:auto;max-height:560px;border:1px solid var(--line);border-radius:10px;margin-top:10px}
+  table.tab-reg{border-collapse:collapse;width:100%;font-size:12.5px}
+  table.tab-reg th{position:sticky;top:0;background:var(--panel-2);color:var(--ink-dim);text-align:left;padding:8px;font-size:11.5px;white-space:nowrap;z-index:1}
+  table.tab-reg td{padding:7px 8px;border-top:1px solid var(--line);vertical-align:top}
+  table.tab-reg td.nw{white-space:nowrap}
+  .pill-st{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap}
+  .pill-st.p{background:rgba(255,138,61,.18);color:var(--warn)}.pill-st.e{background:rgba(74,168,255,.18);color:var(--blue)}.pill-st.c{background:rgba(46,204,113,.18);color:var(--ok)}
+  .stat.clic{cursor:pointer}.stat.clic:hover{outline:2px solid var(--warn)}.stat.on{outline:2px solid var(--warn)}
   .filters select,.filters input{margin-bottom:0;flex:1;min-width:130px}
   .rec{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--c);
     border-radius:12px;padding:14px 15px;margin-bottom:11px}
@@ -412,6 +422,7 @@
       <div class="filters">
         <select id="fType"><option value="">Todos os tipos</option></select>
         <input id="fSearch" placeholder="🔍 Buscar nº, área ou funcionário" />
+        <button id="histExcel" class="btn-xls">⬇ Excel</button>
       </div>
       <div id="histList"><div class="loading"><div class="spin"></div></div></div>
     </section>
@@ -427,6 +438,7 @@
         <input id="dfDe" type="date" title="De" />
         <input id="dfAte" type="date" title="Até" />
         <button id="dfLimpar" class="btn-clear">Limpar</button>
+        <button id="dfExcel" class="btn-xls" title="Baixa os registros do filtro atual">⬇ Excel</button>
       </div>
       <div id="placarHost"></div>
       <div class="stat-grid" id="statGrid"></div>
@@ -495,6 +507,15 @@
           <div id="levouHost"></div>
         </div>
       </div>
+      <div class="card" style="--c:var(--blue);margin-top:16px" id="tabRegCard">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <h3 style="margin:0;font-size:16px">📋 Registros do filtro <span id="tabRegN" style="color:var(--ink-dim);font-weight:500"></span></h3>
+          <span style="flex:1"></span>
+          <input id="tabRegBusca" placeholder="🔍 Buscar nesta tabela" style="margin:0;max-width:240px;padding:8px 10px;font-size:13px" />
+          <button id="tabRegExcel" class="btn-xls">⬇ Excel</button>
+        </div>
+        <div class="tab-wrap" id="tabRegHost"></div>
+      </div>
     </section>
 
     <!-- MATRIZ DE TREINAMENTO -->
@@ -518,6 +539,7 @@
           <option value="k">🟢 Em dia</option>
           <option value="z">⚪ Sem registro</option>
         </select>
+        <button class="btn-xls" id="mxExcel" title="Baixa a matriz como está filtrada">⬇ Excel</button>
         <button class="bt" id="mxNovo" style="display:none">＋ Funcionário</button>
       </div>
       <div class="mx-wrap"><div id="mxHost"><div class="loading"><div class="spin"></div></div></div></div>
@@ -529,7 +551,7 @@
       <h2 class="page-title">🧤 Cadastro de EPIs</h2>
       <div class="card" style="--c:var(--hi)">
         <div class="us-topo"><p class="sub" style="margin:0;flex:1;min-width:220px">Os EPIs ativos aparecem na lista do formulário de <b>Saída de EPI</b>. Desativar tira da lista, mas os registros antigos continuam.</p>
-          <button class="adm-save" id="epNovo">＋ Novo EPI</button></div>
+          <div style="display:flex;gap:8px"><button class="btn-xls" id="epExcel">⬇ Excel</button><button class="adm-save" id="epNovo">＋ Novo EPI</button></div></div>
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 4px">
           <input id="epBusca" placeholder="🔍 Buscar EPI" style="margin:0;max-width:280px">
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-dim);cursor:pointer"><input type="checkbox" id="epInativos" style="width:auto;margin:0"> Mostrar desativados</label>
@@ -543,7 +565,7 @@
       <h2 class="page-title">👥 Usuários e permissões</h2>
       <div class="card" style="--c:var(--hi)">
         <div class="us-topo"><p class="sub" style="margin:0;flex:1;min-width:220px">Inclua logins, mude o nome, troque a senha e escolha o que cada pessoa pode fazer: clique em <b>Editar</b> na linha da pessoa. Vale no próximo acesso dela (ou quando ela recarregar a página).</p>
-          <button class="adm-save" id="usNovo">＋ Novo login</button></div>
+          <div style="display:flex;gap:8px"><button class="btn-xls" id="usExcel">⬇ Excel</button><button class="adm-save" id="usNovo">＋ Novo login</button></div></div>
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:12px 0 4px;color:var(--ink-dim);cursor:pointer"><input type="checkbox" id="usInativos" style="width:auto;margin:0"> Mostrar logins desativados</label>
         <div id="admList"></div>
       </div>
@@ -553,6 +575,7 @@
 
 <div id="toast" class="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
 /* ============================================================
    BANCO: Supabase (projeto "seguranca-campo"). Antes era Firebase.
@@ -674,6 +697,10 @@ const $=id=>document.getElementById(id);
 $("sideFoot").innerHTML='<span style="color:var(--ok)">●</span> Conectado · nuvem';
 
 montarTipos(); popularFiltro(); renderHist();
+// botões de Excel de cada tela + busca da tabela do painel
+$("dfExcel").onclick=()=>excelDash(); $("tabRegExcel").onclick=()=>excelDash(); $("histExcel").onclick=()=>excelHist();
+$("mxExcel").onclick=()=>excelMatriz(); $("epExcel").onclick=()=>excelEpis(); $("usExcel").onclick=()=>excelUsuarios();
+$("tabRegBusca").oninput=()=>renderTabReg();
 
 /* ===== LOGIN (com senha e perfil) ===== */
 async function preencherLoginSelect(){
@@ -1100,13 +1127,17 @@ function popularFiltro(){
   $("fType").onchange=renderHist;
   $("fSearch").oninput=renderHist;
 }
-function renderHist(){
+function histFiltrados(){
   const ft=$("fType").value, fs=($("fSearch").value||"").toLowerCase();
   let list=registros.filter(r=>(!ft||r.tipo===ft));
   if(fs) list=list.filter(r=>(r.area||"").toLowerCase().includes(fs)||
     (r.numero||"").toLowerCase().includes(fs)||
     (r.respInspecao||"").toLowerCase().includes(fs)||
     (r.funcionarios||[]).join(" ").toLowerCase().includes(fs));
+  return list;
+}
+function renderHist(){
+  const list=histFiltrados();
   const host=$("histList");
   if(list.length===0){host.innerHTML='<div class="empty">Nenhum registro encontrado.</div>';return;}
   host.innerHTML=list.map(r=>{
@@ -1185,7 +1216,7 @@ function renderDash(){
   $("statGrid").innerHTML=`
     <div class="stat" style="--c:var(--hi)"><div class="n">${total}</div><div class="l">Total de registros</div></div>
     <div class="stat" style="--c:var(--ok)"><div class="n">${hojeN}</div><div class="l">Registrados hoje</div></div>
-    <div class="stat" style="--c:var(--warn)"><div class="n">${pendentes}</div><div class="l">Anomalias pendentes</div></div>
+    <div class="stat clic ${$("dfStatus").value==="Pendente"?"on":""}" id="statPend" title="Clique para ver só as pendentes na tabela abaixo" style="--c:var(--warn)"><div class="n">${pendentes}</div><div class="l">Anomalias pendentes ${$("dfStatus").value==="Pendente"?"· filtrando":"· ver"}</div></div>
     <div class="stat" style="--c:var(--blue)"><div class="n">${areas.size}</div><div class="l">Áreas inspecionadas</div></div>`;
   const max=Math.max(1,...Object.keys(TIPOS).map(k=>regs.filter(r=>r.tipo===k).length));
   $("barsHost").innerHTML=Object.entries(TIPOS).map(([k,v])=>{
@@ -1203,7 +1234,70 @@ function renderDash(){
   renderStatus(regs);
   renderEpiMes(regs);
   renderRanking(regs);
+  const sp=$("statPend"); if(sp) sp.onclick=()=>{ const el=$("dfStatus"); el.value=el.value==="Pendente"?"":"Pendente"; renderDash(); if(el.value) $("tabRegCard").scrollIntoView({behavior:"smooth",block:"start"}); };
+  renderTabReg(regs);
 }
+
+/* ---- tabela com os registros do filtro (embaixo dos gráficos) ---- */
+function linhaRegistro(r){
+  const d=r.dados||{}, t=TIPOS[r.tipo]||{nome:r.tipo};
+  return {"Nº":r.numero||"","Data":fmtData(r.data),"Hora":r.hora||"","Tipo":t.nome,"Área":r.area||"",
+    "Contrato":d.contrato||"","Atividade":d.atividade||"","Responsável pela atividade":d.respAtividade||"",
+    "Não conformidade":d.naoConformidade||"","Pirâmide":d.piramide||"","Categoria do desvio":d.categoria||"",
+    "Status da anomalia":d.statusAnomalia||"","PSIF":d.psif||"",
+    "EPI":d.epi||"","Quantidade":d.quantidade||"","CA":d.ca||"","Validade":fmtData(d.validade),"Motivo":d.motivo||"","Assinatura":d.assinatura||"",
+    "Funcionários":(r.funcionarios||[]).join(", "),"Responsável pela inspeção":r.respInspecao||"","Observação":r.obs||""};
+}
+function tabRegLista(regs){
+  const q=(($("tabRegBusca")||{}).value||"").toLowerCase().trim();
+  if(!q) return regs;
+  return regs.filter(r=>JSON.stringify(linhaRegistro(r)).toLowerCase().includes(q));
+}
+function renderTabReg(regs){
+  const host=$("tabRegHost"); if(!host) return;
+  const L=tabRegLista(regs||registrosFiltrados());
+  $("tabRegN").textContent="("+L.length+(L.length===1?" registro":" registros")+")";
+  if(!L.length){ host.innerHTML='<div class="empty" style="padding:20px">Nenhum registro com esses filtros.</div>'; return; }
+  const LIM=500, st=v=>v?`<span class="pill-st ${v==="Pendente"?"p":v==="Em andamento"?"e":"c"}">${esc2(v)}</span>`:"";
+  host.innerHTML=`<table class="tab-reg"><thead><tr><th>Nº</th><th>Data</th><th>Tipo</th><th>Área</th><th>Status</th><th>O que houve / EPI</th><th>Pirâmide</th><th>Categoria</th><th>Funcionários</th><th>Inspeção</th></tr></thead><tbody>${
+    L.slice(0,LIM).map(r=>{const d=r.dados||{},t=TIPOS[r.tipo]||{nome:r.tipo,ico:""};
+      return `<tr><td class="nw">${esc2(r.numero||"")}</td><td class="nw">${fmtData(r.data)}</td><td class="nw">${t.ico||""} ${esc2(t.nome)}</td><td>${esc2(r.area||"")}</td>
+        <td>${st(d.statusAnomalia)}</td><td style="min-width:220px">${esc2(r.tipo==="SAIDA_EPI"?[d.epi,d.quantidade&&("qtd "+d.quantidade),d.motivo].filter(Boolean).join(" · "):(d.naoConformidade||d.atividade||""))}</td>
+        <td>${esc2(d.piramide||"")}</td><td>${esc2(d.categoria||"")}</td><td>${esc2((r.funcionarios||[]).join(", "))}</td><td class="nw">${esc2(r.respInspecao||"")}</td></tr>`}).join("")
+  }</tbody></table>${L.length>LIM?`<div class="empty" style="padding:10px">Mostrando ${LIM} de ${L.length}. O Excel traz todos.</div>`:""}`;
+}
+
+/* ---- Excel: um botão em cada tela ---- */
+function baixarExcel(nome, aba, linhas){
+  if(!linhas.length){ toast("Nada para baixar com esses filtros","err"); return; }
+  const arq=nome+"_"+new Date().toISOString().slice(0,10);
+  if(window.XLSX){
+    const ws=XLSX.utils.json_to_sheet(linhas);
+    ws["!cols"]=Object.keys(linhas[0]).map(k=>({wch:Math.min(50,Math.max(k.length,...linhas.slice(0,200).map(l=>String(l[k]??"").length))+2)}));
+    const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,aba.slice(0,31)); XLSX.writeFile(wb,arq+".xlsx");
+  } else {   // sem a biblioteca (sem internet): baixa CSV, que o Excel abre
+    const cols=Object.keys(linhas[0]), q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+    const csv="\ufeff"+[cols.map(q).join(";"),...linhas.map(l=>cols.map(c=>q(l[c])).join(";"))].join("\r\n");
+    const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})); a.download=arq+".csv"; a.click();
+  }
+  toast("Excel baixado ✓");
+}
+function excelDash(){ baixarExcel("apontamentos_painel","Registros",tabRegLista(registrosFiltrados()).map(linhaRegistro)); }
+function excelHist(){ baixarExcel("apontamentos_historico","Histórico",histFiltrados().map(linhaRegistro)); }
+function excelMatriz(){
+  const tre=$("mxTre").value, st=$("mxSt").value, cols=mxColsAlvo();
+  let L=mxLista(); if(st) L=L.filter(f=>mxSituacao(f,cols,st));
+  const sitTxt={v:"Vencido",a:"Vence em até "+MX_AVISO+" dias",k:"Em dia",f:"Feito",z:"Sem registro"};
+  const ver=tre?MX_COLS.filter(c=>c.k===tre):MX_COLS;
+  baixarExcel("matriz_treinamento","Matriz",L.map(f=>{const d=f.dados||{},o={"Funcionário":f.nome,"Função":f.funcao||"","Líder":d.lider||"","Mat. AMP":d.mat_amp||"",
+      "Admissão":fmtData(d.admissao),"Efetivo":f.efetivo?"Sim":"Não","Situação":d.situacao||"Normal"};
+    ver.forEach(c=>{o[c.l+(c.t==="feito"?" (feito em)":" (válido até)")]=fmtData(d[c.k]);if(tre)o["Situação "+c.l]=sitTxt[estado(c,d[c.k])]});
+    o["Fardamento"]=d.fardamento||"";o["Bota"]=d.bota||"";o["Cinto TAG"]=d.cinto_tag||"";o["CNH categoria"]=d.cnh_tipo||"";return o}));
+}
+function excelEpis(){ baixarExcel("epis","EPIs",EPIS_DB.map(e=>({"EPI":e.nome,"CA":e.ca||"","Ativo":e.ativo?"Sim":"Não"}))); }
+function excelUsuarios(){ const nomeP=k=>(PERMISSOES.find(p=>p.k===k)||{l:k}).l;
+  baixarExcel("usuarios","Usuários",USERS.map(u=>({"Login":u.nome,"Perfil":u.perfil==="adm"?"Administradora":"Usuário","Ativo":u.ativo?"Sim":"Não",
+    "Permissões":u.perfil==="adm"?"Todas":(u.permissoes||[]).map(nomeP).join(", "),"Último acesso":u.ultimo_login?new Date(u.ultimo_login).toLocaleString("pt-BR"):""}))); }
 
 /* ---- gráfico de quantidade por mês ---- */
 const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
