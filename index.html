@@ -185,7 +185,7 @@
   .mx-tag{display:inline-block;font-size:9.5px;font-weight:800;border-radius:5px;padding:1px 6px;margin-left:4px;vertical-align:1px;text-transform:uppercase}
   .mx-tag.fora{background:#3a2530;color:#ff9db0}.mx-tag.exp{background:#1f3347;color:#8fc8ff}.mx-tag.par{background:#3b331c;color:#ffd46b}
   table.mx td.c{cursor:default;min-width:70px;font-variant-numeric:tabular-nums}
-  table.mx td.c.ed{cursor:pointer}table.mx td.c.ed:hover{outline:2px solid var(--hi);outline-offset:-2px}
+  table.mx td.ed{cursor:pointer}table.mx td.ed:hover{outline:2px solid var(--hi);outline-offset:-2px}
   table.mx td.v{background:rgba(255,77,77,.18);color:#ff9b9b;font-weight:700}
   table.mx td.a{background:rgba(255,138,61,.16);color:#ffc08f;font-weight:700}
   table.mx td.k{color:#8ee6b4}
@@ -1033,7 +1033,7 @@ function renderMatriz(){
     return mxTabelaFoco(L,colT);
   }
   const ehAdm=pode("matriz_editar");
-  $("mxDica").textContent=ehAdm?"Clique numa data para alterar, ou no nome para editar o funcionário.":"";
+  $("mxDica").textContent=ehAdm?"Clique em qualquer célula (data, líder, admissão, farda, cinto) para alterar, ou no nome para editar o funcionário.":"";
   if(!L.length){ $("mxHost").innerHTML='<div class="empty">Nenhum funcionário com esses filtros.</div>'; return; }
   const nInt=MX_COLS.filter(c=>c.g==="Integração").length, nVal=MX_COLS.length-nInt;
   let h='<table class="mx"><thead><tr><th class="nm" rowspan="2">Funcionário</th><th rowspan="2">Líder</th><th rowspan="2">Admissão</th>'+
@@ -1043,16 +1043,16 @@ function renderMatriz(){
     const d=f.dados||{}, sit=d.situacao;
     const tags=(!f.efetivo?'<span class="mx-tag fora">fora do efetivo</span>':'')+(sit==="experiência"?'<span class="mx-tag exp">experiência</span>':'');
     return `<tr><td class="nm ${ehAdm?"c ed":""}" data-id="${f.id}" data-acao="pessoa"><b>${esc2(f.nome)}${tags}</b><small>${esc2(f.funcao||"—")}${d.mat_amp?" · Mat. AMP "+esc2(d.mat_amp):""}${d.cnh_tipo?" · CNH "+esc2(d.cnh_tipo.toUpperCase()):""}</small></td>`+
-      `<td>${esc2(d.lider||"")}</td><td>${fmtD(d.admissao)}</td>`+
+      `<td class="${ehAdm?"ed":""}" data-id="${f.id}" data-acao="campo" data-campos="lider">${esc2(d.lider||"")}</td><td class="${ehAdm?"ed":""}" data-id="${f.id}" data-acao="campo" data-campos="admissao">${fmtD(d.admissao)}</td>`+
       MX_COLS.map(c=>{ const v=d[c.k], e=estado(c,v), n=diasAte(v);
         const tt=!v?"Sem registro":c.t==="feito"?"Feito em "+fmtD(v):(n<0?"Vencido há "+(-n)+" dias":"Faltam "+n+" dias");
         return `<td class="c ${e} ${ehAdm?"ed":""}" data-id="${f.id}" data-k="${c.k}" title="${esc2(c.l)}: ${tt}">${v?fmtD(v):"·"}</td>`; }).join("")+
-      `<td>${esc2([d.fardamento,d.bota].filter(Boolean).join(" / "))}</td><td>${esc2(d.cinto_tag||"")}</td></tr>`;
+      `<td class="${ehAdm?"ed":""}" data-id="${f.id}" data-acao="campo" data-campos="fardamento,bota">${esc2([d.fardamento,d.bota].filter(Boolean).join(" / "))}</td><td class="${ehAdm?"ed":""}" data-id="${f.id}" data-acao="campo" data-campos="cinto_tag">${esc2(d.cinto_tag||"")}</td></tr>`;
   }).join("")+'</tbody></table>';
   $("mxHost").innerHTML=h;
   if(ehAdm) $("mxHost").querySelectorAll("td.ed").forEach(td=>td.onclick=()=>{
     const f=FUNCS.find(x=>x.id===+td.dataset.id); if(!f) return;
-    td.dataset.acao==="pessoa"?mxEditarPessoa(f):mxEditarData(f,MX_COLS.find(c=>c.k===td.dataset.k));
+    td.dataset.acao==="pessoa"?mxEditarPessoa(f):td.dataset.acao==="campo"?mxEditarCampo(f,td.dataset.campos.split(",")):mxEditarData(f,MX_COLS.find(c=>c.k===td.dataset.k));
   });
 }
 ["mxBusca","mxSit","mxFunc","mxTre","mxSt"].forEach(id=>{ const el=$(id); el.addEventListener(id==="mxBusca"?"input":"change",()=>renderMatriz()); });
@@ -1151,15 +1151,31 @@ function mxTabelaFoco(L,c){
   h+=L.map(f=>{ const d=f.dados||{}, v=d[c.k], e=estado(c,v), n=diasAte(v);
     const sit=!v?"Sem registro":n<0?`Vencido há ${-n} ${-n===1?"dia":"dias"}`:n===0?"Vence hoje":`Faltam ${n} ${n===1?"dia":"dias"}`;
     const tags=(!f.efetivo?'<span class="mx-tag fora">fora do efetivo</span>':'')+(d.situacao==="experiência"?'<span class="mx-tag exp">experiência</span>':'');
-    return `<tr><td class="nm"><b>${esc2(f.nome)}${tags}</b><small>${esc2(f.funcao||"—")}</small></td><td>${esc2(d.lider||"")}</td>`+
+    return `<tr><td class="nm ${ehAdm?"ed":""}" data-id="${f.id}" data-acao="pessoa"><b>${esc2(f.nome)}${tags}</b><small>${esc2(f.funcao||"—")}</small></td><td class="${ehAdm?"ed":""}" data-id="${f.id}" data-acao="campo" data-campos="lider">${esc2(d.lider||"")}</td>`+
       `<td class="c ${e} ${ehAdm?"ed":""}" data-id="${f.id}" data-k="${c.k}">${v?fmtD(v):"·"}</td><td class="c ${e}" style="min-width:150px">${sit}</td></tr>`; }).join("")+'</tbody></table>';
   $("mxHost").innerHTML=h;
-  if(ehAdm) $("mxHost").querySelectorAll("td.ed").forEach(td=>td.onclick=()=>{ const f=FUNCS.find(x=>x.id===+td.dataset.id); if(f) mxEditarData(f,c); });
+  if(ehAdm) $("mxHost").querySelectorAll("td.ed").forEach(td=>td.onclick=()=>{ const f=FUNCS.find(x=>x.id===+td.dataset.id); if(!f) return;
+    td.dataset.acao==="pessoa"?mxEditarPessoa(f):td.dataset.acao==="campo"?mxEditarCampo(f,td.dataset.campos.split(",")):mxEditarData(f,c); });
 }
 
 function mxModal(html){ const m=document.createElement("div"); m.className="mx-modal"; m.innerHTML='<div class="box">'+html+'</div>';
   m.onclick=e=>{ if(e.target===m) m.remove(); }; document.body.appendChild(m); return m; }
 
+const MX_CAMPOS_PESSOA={lider:{l:"Líder",t:"text"},admissao:{l:"Admissão",t:"date"},fardamento:{l:"Fardamento (tam.)",t:"text"},bota:{l:"Bota (nº)",t:"text"},cinto_tag:{l:"Cinto TAG",t:"text"}};
+function mxEditarCampo(f,ks){
+  const d=f.dados||{}, defs=ks.map(k=>({k,...MX_CAMPOS_PESSOA[k]}));
+  const m=mxModal(`<h3>${esc2(defs.map(c=>c.l).join(" / "))}</h3><p class="sub">${esc2(f.nome)}</p>
+    ${defs.map(c=>`<label>${esc2(c.l)}</label><input id="mxC_${c.k}" type="${c.t}" value="${esc2(d[c.k]||"")}">`).join("")}
+    <div class="acts"><button class="no" id="mxCanc">Cancelar</button><button class="ok" id="mxOk">Salvar</button></div>`);
+  m.querySelector("#mxCanc").onclick=()=>m.remove();
+  m.querySelector("#mxOk").onclick=async()=>{
+    try{ for(const c of defs){ const v=m.querySelector("#mxC_"+c.k).value.trim(); if(v!==(d[c.k]||"")) await rpc("seg_matriz_definir",{p_token:TOKEN,p_id:f.id,p_campo:c.k,p_valor:v}); }
+      m.remove(); toast("Matriz atualizada ✓"); await carregarFuncionarios(); }
+    catch(e){ toast("Erro: "+e.message,"err"); }
+  };
+  m.querySelectorAll("input").forEach(i=>i.onkeydown=e=>{ if(e.key==="Enter") m.querySelector("#mxOk").click(); });
+  m.querySelector("input").focus();
+}
 function mxEditarData(f,c){
   const v=(f.dados||{})[c.k]||"";
   const m=mxModal(`<h3>${esc2(c.l)}</h3><p class="sub">${esc2(f.nome)} · ${c.t==="feito"?"data em que fez":"válido até"}</p>
