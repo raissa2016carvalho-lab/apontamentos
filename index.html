@@ -544,6 +544,7 @@
         <button class="btn-xls" id="mxExcel" title="Baixa a matriz como está filtrada">⬇ Excel</button>
         <button class="bt" id="mxNovo" style="display:none">＋ Funcionário</button>
         <button class="bt" id="mxRenFunc" style="display:none" title="Renomeia a função escolhida para todos que têm ela">✏ Renomear função</button>
+        <button class="bt" id="mxRenLider" style="display:none" title="Troca o nome do líder em todos os funcionários dele">✏ Renomear líder</button>
       </div>
       <div class="mx-wrap"><div id="mxHost"><div class="loading"><div class="spin"></div></div></div></div>
       <div class="mx-leg"><span><i style="background:rgba(255,77,77,.5)"></i>Vencido</span><span><i style="background:rgba(255,138,61,.5)"></i>Vence em até 30 dias</span><span><i style="background:#2f6e4f"></i>Em dia</span><span><i style="background:#2a3540"></i>Sem registro</span><span id="mxDica"></span></div>
@@ -780,6 +781,7 @@ function aplicarPerfil(){
   mostra('.nav-item[data-view="matriz"]',"matriz");
   mostra('#mxNovo',"matriz_editar");
   mostra('#mxRenFunc',"matriz_editar");
+  mostra('#mxRenLider',"matriz_editar");
   mostra('#histTrocaNome',"editar");
   let admItem=document.getElementById("navAdm");
   if(pode("usuarios") && !admItem){
@@ -1120,6 +1122,27 @@ $("histTrocaNome").onclick=()=>{
     catch(e){ toast("Erro: "+e.message,"err"); }
   };
   m.querySelector("#tnDe").focus();
+};
+$("mxRenLider").onclick=()=>{
+  const lideres=[...new Set(FUNCS.filter(f=>f.ativo).map(f=>((f.dados||{}).lider||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  if(!lideres.length){ toast("Nenhum líder cadastrado ainda","err"); return; }
+  const m=mxModal(`<h3>Renomear líder</h3><p class="sub">Troca o nome do líder em todos os funcionários dele</p>
+    <label>Líder</label><select id="rlDe">${lideres.map(l=>`<option>${esc2(l)}</option>`).join("")}</select>
+    <label>Novo nome</label><input id="rlPara">
+    <div id="rlN" class="sub" style="margin:0 0 8px"></div>
+    <div class="acts"><button class="no" id="rlCanc">Cancelar</button><button class="ok" id="rlOk">Renomear</button></div>`);
+  const conta=()=>{ const de=m.querySelector("#rlDe").value.toLowerCase(); const n=FUNCS.filter(f=>((f.dados||{}).lider||"").trim().toLowerCase()===de).length;
+    m.querySelector("#rlN").textContent=n+(n===1?" funcionário tem esse líder.":" funcionários têm esse líder."); m.querySelector("#rlPara").value=m.querySelector("#rlDe").value; };
+  m.querySelector("#rlDe").onchange=conta; conta();
+  m.querySelector("#rlCanc").onclick=()=>m.remove();
+  m.querySelector("#rlOk").onclick=async()=>{
+    const de=m.querySelector("#rlDe").value, para=m.querySelector("#rlPara").value.trim();
+    if(!para){ toast("Informe o novo nome","err"); return; }
+    if(para===de){ m.remove(); return; }
+    try{ const n=await rpc("seg_lider_renomear",{p_token:TOKEN,p_de:de,p_para:para}); m.remove(); toast(`Líder renomeado ✓ (${n} funcionário(s))`); await carregarFuncionarios(); }
+    catch(e){ toast("Erro: "+e.message,"err"); }
+  };
+  m.querySelector("#rlPara").focus();
 };
 $("mxRenFunc").onclick=()=>{
   const funcoes=[...new Set(FUNCS.filter(f=>f.ativo).map(f=>f.funcao).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
