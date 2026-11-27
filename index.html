@@ -146,6 +146,7 @@
   table.tab-reg th{position:sticky;top:0;background:var(--panel-2);color:var(--ink-dim);text-align:left;padding:8px;font-size:11.5px;white-space:nowrap;z-index:1}
   table.tab-reg td{padding:7px 8px;border-top:1px solid var(--line);vertical-align:top}
   table.tab-reg td.nw{white-space:nowrap}
+  table.tab-reg tr.tr-ed{cursor:pointer}table.tab-reg tr.tr-ed:hover td{background:rgba(127,127,127,.1)}
   .pill-st{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap}
   .pill-st.p{background:rgba(255,138,61,.18);color:var(--warn)}.pill-st.e{background:rgba(74,168,255,.18);color:var(--blue)}.pill-st.c{background:rgba(46,204,113,.18);color:var(--ok)}
   .stat.clic{cursor:pointer}.stat.clic:hover{outline:2px solid var(--warn)}.stat.on{outline:2px solid var(--warn)}
@@ -423,6 +424,7 @@
         <select id="fType"><option value="">Todos os tipos</option></select>
         <input id="fSearch" placeholder="🔍 Buscar nº, área ou funcionário" />
         <button id="histExcel" class="btn-xls">⬇ Excel</button>
+        <button id="histTrocaNome" class="bt" style="display:none" title="Corrige um nome em todos os apontamentos já registrados">✏ Trocar nome nos registros</button>
       </div>
       <div id="histList"><div class="loading"><div class="spin"></div></div></div>
     </section>
@@ -541,6 +543,7 @@
         </select>
         <button class="btn-xls" id="mxExcel" title="Baixa a matriz como está filtrada">⬇ Excel</button>
         <button class="bt" id="mxNovo" style="display:none">＋ Funcionário</button>
+        <button class="bt" id="mxRenFunc" style="display:none" title="Renomeia a função escolhida para todos que têm ela">✏ Renomear função</button>
       </div>
       <div class="mx-wrap"><div id="mxHost"><div class="loading"><div class="spin"></div></div></div></div>
       <div class="mx-leg"><span><i style="background:rgba(255,77,77,.5)"></i>Vencido</span><span><i style="background:rgba(255,138,61,.5)"></i>Vence em até 30 dias</span><span><i style="background:#2f6e4f"></i>Em dia</span><span><i style="background:#2a3540"></i>Sem registro</span><span id="mxDica"></span></div>
@@ -684,6 +687,7 @@ const PERMISSOES=[
   {k:"ips",l:"Registrar IPS"},
   {k:"epi",l:"Registrar saída de EPI"},
   {k:"historico",l:"Ver o histórico"},
+  {k:"editar",l:"Editar apontamentos e trocar nomes nos registros"},
   {k:"excluir",l:"Excluir apontamentos"},
   {k:"matriz",l:"Ver a matriz de treinamento"},
   {k:"matriz_editar",l:"Editar matriz e funcionários"},
@@ -775,6 +779,8 @@ function aplicarPerfil(){
   mostra('.nav-item[data-view="hist"]',"historico");
   mostra('.nav-item[data-view="matriz"]',"matriz");
   mostra('#mxNovo',"matriz_editar");
+  mostra('#mxRenFunc',"matriz_editar");
+  mostra('#histTrocaNome',"editar");
   let admItem=document.getElementById("navAdm");
   if(pode("usuarios") && !admItem){
     admItem=document.createElement("button");
@@ -1051,6 +1057,91 @@ function renderMatriz(){
 }
 ["mxBusca","mxSit","mxFunc","mxTre","mxSt"].forEach(id=>{ const el=$(id); el.addEventListener(id==="mxBusca"?"input":"change",()=>renderMatriz()); });
 $("mxNovo").onclick=()=>mxEditarPessoa(null);
+/* ---------- EDITAR APONTAMENTO / TROCAR NOMES ---------- */
+function editarRegistro(id){
+  const r=registros.find(x=>x.id===id); if(!r){ toast("Registro não encontrado","err"); return; }
+  const d=r.dados||{}, campos=CAMPOS[r.tipo]||[], t=TIPOS[r.tipo]||{nome:r.tipo};
+  const opts=(arr,v)=>{ const L=[...arr]; if(v&&!L.includes(v)) L.unshift(v); return '<option value=""></option>'+L.map(o=>`<option ${o===v?"selected":""}>${esc2(o)}</option>`).join(""); };
+  const campoHtml=c=>{ const v=d[c.k]||"";
+    if(c.t==="select") return `<label>${esc2(c.l)}</label><select data-k="${c.k}">${opts(c.opt||[],v)}</select>`;
+    if(c.t==="textarea") return `<label>${esc2(c.l)}</label><textarea data-k="${c.k}">${esc2(v)}</textarea>`;
+    return `<label>${esc2(c.l)}</label><input data-k="${c.k}" type="${c.t==="date"?"date":"text"}" value="${esc2(v)}">`; };
+  const m=mxModal(`<h3>Editar ${esc2(t.nome)} ${esc2(r.numero||"")}</h3><p class="sub">Registrado por ${esc2(r.respInspecao||"—")}</p>
+    <div class="g2"><div><label>Data</label><input type="date" id="erData" value="${esc2(r.data||"")}"></div><div><label>Hora</label><input type="time" id="erHora" value="${esc2(r.hora||"")}"></div></div>
+    <label>Área</label><select id="erArea">${opts(AREAS,r.area||"")}</select>
+    ${campos.map(campoHtml).join("")}
+    <label>Funcionários (um por linha)</label><textarea id="erFunc" placeholder="Nome de cada funcionário">${esc2((r.funcionarios||[]).join("\n"))}</textarea>
+    <label>Responsável pela inspeção</label><input id="erResp" value="${esc2(r.respInspecao||"")}">
+    <label>Observação</label><textarea id="erObs">${esc2(r.obs||"")}</textarea>
+    <div class="acts"><button class="no" id="erCanc">Cancelar</button><button class="ok" id="erOk">Salvar</button></div>`);
+  m.querySelector(".box").style.maxWidth="560px";
+  m.querySelector("#erCanc").onclick=()=>m.remove();
+  m.querySelector("#erOk").onclick=async()=>{
+    const dados={...d}; m.querySelectorAll("[data-k]").forEach(el=>{ dados[el.dataset.k]=el.value.trim(); });
+    const p={data:m.querySelector("#erData").value,hora:m.querySelector("#erHora").value,area:m.querySelector("#erArea").value,
+      funcionarios:m.querySelector("#erFunc").value.split(/\n|,/).map(x=>x.trim()).filter(Boolean),
+      dados,respInspecao:m.querySelector("#erResp").value.trim(),obs:m.querySelector("#erObs").value};
+    if(!p.area){ toast("Selecione a área","err"); return; }
+    const b=m.querySelector("#erOk"); b.disabled=true;
+    try{ await rpc("seg_apontamento_editar",{p_token:TOKEN,p_id:id,p}); m.remove(); toast("Apontamento atualizado ✓"); await carregarRegistros(); }
+    catch(e){ toast("Erro: "+e.message,"err"); b.disabled=false; }
+  };
+}
+function nomesUsados(){
+  const s=new Set();
+  registros.forEach(r=>{ (r.funcionarios||[]).forEach(f=>f&&s.add(f.trim())); if(r.respInspecao) s.add(r.respInspecao.trim()); const ra=(r.dados||{}).respAtividade; if(ra) s.add(String(ra).trim()); });
+  return [...s].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+}
+$("histTrocaNome").onclick=()=>{
+  const m=mxModal(`<h3>Trocar nome nos registros</h3><p class="sub">Corrige o nome em todos os apontamentos já registrados</p>
+    <label>Nome como está hoje</label><input id="tnDe" list="tnLista" placeholder="Digite ou escolha"><datalist id="tnLista">${nomesUsados().map(n=>`<option value="${esc2(n)}">`).join("")}</datalist>
+    <label>Nome certo</label><input id="tnPara">
+    <label>Onde trocar</label>
+    <label class="ck"><input type="checkbox" class="tnC" value="funcionarios" checked> Funcionários do apontamento</label>
+    <label class="ck"><input type="checkbox" class="tnC" value="respAtividade" checked> Responsável pela atividade</label>
+    <label class="ck"><input type="checkbox" class="tnC" value="respInspecao" checked> Responsável pela inspeção</label>
+    <div id="tnPrev" class="sub" style="margin:0 0 8px"></div>
+    <div class="acts"><button class="no" id="tnCanc">Cancelar</button><button class="ok" id="tnOk">Trocar</button></div>`);
+  const prev=()=>{ const de=m.querySelector("#tnDe").value.trim().toLowerCase(); if(!de){ m.querySelector("#tnPrev").textContent=""; return; }
+    const c=[...m.querySelectorAll(".tnC:checked")].map(x=>x.value);
+    const n=registros.filter(r=>(c.includes("funcionarios")&&(r.funcionarios||[]).some(f=>f.trim().toLowerCase()===de))||
+      (c.includes("respAtividade")&&String((r.dados||{}).respAtividade||"").trim().toLowerCase()===de)||
+      (c.includes("respInspecao")&&String(r.respInspecao||"").trim().toLowerCase()===de)).length;
+    m.querySelector("#tnPrev").textContent=n+(n===1?" apontamento vai ser alterado.":" apontamentos vão ser alterados."); };
+  m.querySelector("#tnDe").oninput=prev; m.querySelectorAll(".tnC").forEach(x=>x.onchange=prev);
+  m.querySelector("#tnCanc").onclick=()=>m.remove();
+  m.querySelector("#tnOk").onclick=async()=>{
+    const de=m.querySelector("#tnDe").value.trim(), para=m.querySelector("#tnPara").value.trim(), c=[...m.querySelectorAll(".tnC:checked")].map(x=>x.value);
+    if(!de||!para){ toast("Informe o nome atual e o nome certo","err"); return; }
+    if(!c.length){ toast("Marque onde trocar","err"); return; }
+    if(!confirm(`Trocar "${de}" por "${para}" nos apontamentos?`)) return;
+    try{ const r=await rpc("seg_nome_trocar",{p_token:TOKEN,p_de:de,p_para:para,p_campos:c}); m.remove();
+      toast(`Trocado ✓ (${(r.funcionarios||0)+(r.respAtividade||0)+(r.respInspecao||0)} alteração(ões))`); await carregarRegistros(); }
+    catch(e){ toast("Erro: "+e.message,"err"); }
+  };
+  m.querySelector("#tnDe").focus();
+};
+$("mxRenFunc").onclick=()=>{
+  const funcoes=[...new Set(FUNCS.filter(f=>f.ativo).map(f=>f.funcao).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  const atual=$("mxFunc").value;
+  const m=mxModal(`<h3>Renomear função</h3><p class="sub">Muda o nome da função para todos os funcionários que têm ela</p>
+    <label>Função</label><select id="rfDe">${funcoes.map(f=>`<option ${f===atual?"selected":""}>${esc2(f)}</option>`).join("")}</select>
+    <label>Novo nome</label><input id="rfPara">
+    <div id="rfN" class="sub" style="margin:0 0 8px"></div>
+    <div class="acts"><button class="no" id="rfCanc">Cancelar</button><button class="ok" id="rfOk">Renomear</button></div>`);
+  const conta=()=>{ const de=m.querySelector("#rfDe").value; const n=FUNCS.filter(f=>(f.funcao||"")===de).length; m.querySelector("#rfN").textContent=n+(n===1?" funcionário tem essa função.":" funcionários têm essa função."); m.querySelector("#rfPara").value=de; };
+  m.querySelector("#rfDe").onchange=conta; conta();
+  m.querySelector("#rfCanc").onclick=()=>m.remove();
+  m.querySelector("#rfOk").onclick=async()=>{
+    const de=m.querySelector("#rfDe").value, para=m.querySelector("#rfPara").value.trim();
+    if(!para){ toast("Informe o novo nome","err"); return; }
+    if(para===de){ m.remove(); return; }
+    try{ const n=await rpc("seg_funcao_renomear",{p_token:TOKEN,p_de:de,p_para:para}); m.remove(); toast(`Função renomeada ✓ (${n} funcionário(s))`);
+      await carregarFuncionarios(); $("mxFunc").value=para; renderMatriz(); }
+    catch(e){ toast("Erro: "+e.message,"err"); }
+  };
+};
+
 
 function mxTabelaFoco(L,c){
   const ehAdm=pode("matriz_editar");
@@ -1157,10 +1248,13 @@ function renderHist(){
         ${(r.funcionarios||[]).map(f=>`<span>👤 ${f}</span>`).join("")}
         ${r.respInspecao?`<span style="border-color:var(--hi);color:var(--hi)">🔎 ${r.respInspecao}</span>`:""}
       </div>
+      ${r.editadoEm?`<div class="det" style="font-size:11px;opacity:.7">✏ editado por ${esc2(r.editadoPor||"")} em ${new Date(r.editadoEm).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</div>`:""}
+      ${pode("editar")?`<button class="del ed-rec" data-id="${r.id}" style="color:var(--hi);margin-right:14px">✏ Editar</button>`:""}
       ${pode("excluir")?`<button class="del" data-id="${r.id}">🗑 Excluir</button>`:""}
     </div>`;
   }).join("");
-  host.querySelectorAll(".del").forEach(b=>b.onclick=()=>excluir(b.dataset.id));
+  host.querySelectorAll(".del:not(.ed-rec)").forEach(b=>b.onclick=()=>excluir(b.dataset.id));
+  host.querySelectorAll(".ed-rec").forEach(b=>b.onclick=()=>editarRegistro(+b.dataset.id));
 }
 async function excluir(id){
   if(!confirm("Excluir este apontamento?"))return;
@@ -1255,16 +1349,17 @@ function tabRegLista(regs){
 }
 function renderTabReg(regs){
   const host=$("tabRegHost"); if(!host) return;
+  if(!host.dataset.edLigado){ host.dataset.edLigado="1"; host.addEventListener("click",e=>{ const tr=e.target.closest("tr.tr-ed"); if(tr) editarRegistro(+tr.dataset.id); }); }
   const L=tabRegLista(regs||registrosFiltrados());
   $("tabRegN").textContent="("+L.length+(L.length===1?" registro":" registros")+")";
   if(!L.length){ host.innerHTML='<div class="empty" style="padding:20px">Nenhum registro com esses filtros.</div>'; return; }
   const LIM=500, st=v=>v?`<span class="pill-st ${v==="Pendente"?"p":v==="Em andamento"?"e":"c"}">${esc2(v)}</span>`:"";
   host.innerHTML=`<table class="tab-reg"><thead><tr><th>Nº</th><th>Data</th><th>Tipo</th><th>Área</th><th>Status</th><th>O que houve / EPI</th><th>Pirâmide</th><th>Categoria</th><th>Funcionários</th><th>Inspeção</th></tr></thead><tbody>${
     L.slice(0,LIM).map(r=>{const d=r.dados||{},t=TIPOS[r.tipo]||{nome:r.tipo,ico:""};
-      return `<tr><td class="nw">${esc2(r.numero||"")}</td><td class="nw">${fmtData(r.data)}</td><td class="nw">${t.ico||""} ${esc2(t.nome)}</td><td>${esc2(r.area||"")}</td>
+      return `<tr data-id="${r.id}" ${pode("editar")?'class="tr-ed" title="Clique para editar"':''}><td class="nw">${esc2(r.numero||"")}</td><td class="nw">${fmtData(r.data)}</td><td class="nw">${t.ico||""} ${esc2(t.nome)}</td><td>${esc2(r.area||"")}</td>
         <td>${st(d.statusAnomalia)}</td><td style="min-width:220px">${esc2(r.tipo==="SAIDA_EPI"?[d.epi,d.quantidade&&("qtd "+d.quantidade),d.motivo].filter(Boolean).join(" · "):(d.naoConformidade||d.atividade||""))}</td>
         <td>${esc2(d.piramide||"")}</td><td>${esc2(d.categoria||"")}</td><td>${esc2((r.funcionarios||[]).join(", "))}</td><td class="nw">${esc2(r.respInspecao||"")}</td></tr>`}).join("")
-  }</tbody></table>${L.length>LIM?`<div class="empty" style="padding:10px">Mostrando ${LIM} de ${L.length}. O Excel traz todos.</div>`:""}`;
+  }</tbody></table>${pode("editar")?'<div class="empty" style="padding:8px;font-size:12px">Clique numa linha para editar o apontamento.</div>':''}${L.length>LIM?`<div class="empty" style="padding:10px">Mostrando ${LIM} de ${L.length}. O Excel traz todos.</div>`:""}`;
 }
 
 /* ---- Excel: um botão em cada tela ---- */
